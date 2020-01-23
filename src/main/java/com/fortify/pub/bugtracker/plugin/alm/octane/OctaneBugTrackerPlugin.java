@@ -26,7 +26,6 @@
 package com.fortify.pub.bugtracker.plugin.alm.octane;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -38,10 +37,8 @@ import com.fortify.pub.bugtracker.plugin.BugTrackerPluginImplementation;
 import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClient;
 import com.fortify.pub.bugtracker.support.Bug;
 import com.fortify.pub.bugtracker.support.BugParam;
-import com.fortify.pub.bugtracker.support.BugParamChoice;
 import com.fortify.pub.bugtracker.support.BugSubmission;
 import com.fortify.pub.bugtracker.support.BugTrackerConfig;
-import com.fortify.pub.bugtracker.support.BugTrackerException;
 import com.fortify.pub.bugtracker.support.IssueDetail;
 import com.fortify.pub.bugtracker.support.MultiIssueBugSubmission;
 import com.fortify.pub.bugtracker.support.UserAuthenticationStore;
@@ -53,8 +50,8 @@ import com.fortify.pub.bugtracker.support.UserAuthenticationStore;
 public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     private static final Log LOG = LogFactory.getLog(OctaneBugTrackerPlugin.class);
 
-    /* Config as injected by setConfiguration. */
     private BugTrackerOctaneApiClientFactory octaneApiClientFactory;
+    private OctaneBugParamHelper octaneBugParamHelper;
 
     public OctaneBugTrackerPlugin() {}
 
@@ -73,23 +70,16 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     @Override
     public List<BugParam> getBugParameters(IssueDetail issueDetail, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::getBugParameters");
-        /* You need at least one bug parameter, otherwise you get an NPE in SSC. */
-        List<BugParam> bugParams = new ArrayList<>();
-
-        BugParam projectParam = new BugParamChoice().setHasDependentParams(false).setIdentifier("PROJECT").setDisplayLabel("Octane Project")
-                .setRequired(true).setDescription("Octane Project against which bug is to be filed");
-
-
-        ((BugParamChoice)projectParam).setChoiceList(Arrays.asList("Project A", "Project B"));
-        bugParams.add(projectParam);
-
-        return bugParams;
+        try (OctaneApiClient client = getOctaneRestApi(authStore)) {
+        	return octaneBugParamHelper.getBugParameters(client, issueDetail);
+        }
     }
 
     @Override
     public List<BugTrackerConfig> getConfiguration() {
         List<BugTrackerConfig> result = new ArrayList<>();
         BugTrackerOctaneApiClientFactory.addBugTrackerConfigFields(result);
+        OctaneBugParamHelper.addBugTrackerConfigFields(result);
         pluginHelper.populateWithDefaultsIfAvailable(result);
         return result;
     }
@@ -97,6 +87,7 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     @Override
     public void setConfiguration(Map<String, String> config) {
         this.octaneApiClientFactory = new BugTrackerOctaneApiClientFactory(config);
+        this.octaneBugParamHelper = new OctaneBugParamHelper(config);
     }
 
     @Override
@@ -119,11 +110,11 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     }
 
     @Override
-    public List<BugParam> onParameterChange(IssueDetail issueDetail, String changedParamIdentifier
-            , List<BugParam> currentValues, UserAuthenticationStore authStore) {
+    public List<BugParam> onParameterChange(IssueDetail issueDetail, String changedParamIdentifier, List<BugParam> currentValues, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::onParameterChange");
-        List<BugParam> returnParams = new ArrayList<>();
-        return returnParams;
+        try (OctaneApiClient client = getOctaneRestApi(authStore)) {
+        	return octaneBugParamHelper.onParameterChange(client, issueDetail, changedParamIdentifier, currentValues);
+        }
     }
 
     @Override
@@ -214,6 +205,8 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
         LOG.info("XXX OctaneBugTrackerPlugin::addCommentToBug");
     }
     
+    
+    
     private final OctaneApiClient getOctaneRestApi(final UserAuthenticationStore authStore) {
 		return octaneApiClientFactory.getOctaneRestApi(authStore);
 	}
@@ -221,8 +214,6 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     private final void validateOctaneConnection(final UserAuthenticationStore authStore) {
     	try (OctaneApiClient client = getOctaneRestApi(authStore)) {
             client.validateConnection();
-        } catch (Exception e) {
-            throw new BugTrackerException("There was an error validating the TFS provided config", e);
         }
     }
 

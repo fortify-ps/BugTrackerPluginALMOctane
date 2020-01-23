@@ -24,9 +24,16 @@
  ******************************************************************************/
 package com.fortify.pub.bugtracker.plugin.alm.octane.client;
 
+import java.util.Collections;
+import java.util.List;
+
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.ws.rs.client.WebTarget;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.fortify.pub.bugtracker.support.Bug;
 
@@ -35,6 +42,7 @@ import com.fortify.pub.bugtracker.support.Bug;
  * REST endpoints.
  */
 public class OctaneApiClient implements AutoCloseable {
+	private static final Log LOG = LogFactory.getLog(OctaneApiClient.class);
     private final OctaneHttpClient client;
 
 	public OctaneApiClient(OctaneHttpClient client) {
@@ -52,29 +60,10 @@ public class OctaneApiClient implements AutoCloseable {
     public void validateConnection() {
     	WebTarget target = client.getApiWorkspaceTarget()
     			.path("work_item_roots")
-    			.queryParam("fields", "type")
+    			.queryParam("fields", "id")
     			.queryParam("limit", 1);
     	client.httpGetRequest(target, JsonObject.class);
     }
-    
-    private final JsonArray getEntities(String entityName) {
-		WebTarget target = client.getApiWorkspaceTarget().path(entityName);
-		JsonObject json = client.httpGetRequest(target, JsonObject.class);
-		System.out.println(json);
-		return json.getJsonArray("data");
-	}
-    
-    public JsonArray getWorkItems() {
-		return getEntities("work_items");
-	}
-    
-    public JsonArray getFeatures() {
-		return getEntities("features");
-	}
-    
-    public JsonArray getPhases() {
-		return getEntities("phases");
-	}
 	
     /*
 	private JSONMap submitOrUpdateIssue(OctaneSharedSpaceAndWorkspaceId sharedSpaceAndWorkspaceId, Map<String, Object> issueData, String httpMethod) {
@@ -116,4 +105,47 @@ public class OctaneApiClient implements AutoCloseable {
 
         return new Bug(issueId, bugStatus, bugResolution);
     }
+
+	public List<String> getWorkItemRootNames() {
+		return queryEntityNames("work_item_roots", null);
+	}
+
+	public List<String> getEpicNames(String rootName) {
+		final String query = String.format("\"parent EQ {name EQ '%s'}\"", rootName);
+		return StringUtils.isBlank(rootName) 
+				? Collections.emptyList()
+				: queryEntityNames("epics", query);
+	}
+
+	public List<String> getFeatureNames(String rootName, String epicName) {
+		//final String query = String.format("\"parent EQ {name EQ '%s' ; parent EQ {name EQ '%s'}}\"", epicName, rootName);
+		final String query = String.format("\"parent EQ {name EQ '%s' }\"", epicName, rootName);
+		return StringUtils.isBlank(rootName) || StringUtils.isBlank(epicName)
+				? Collections.emptyList()
+				: queryEntityNames("features", query);
+	}
+	
+	private final List<String> queryEntityNames(String entityName, String query) {
+		List<String> result = queryEntities(entityName, query, "name").getValuesAs(this::getEntityName);
+		LOG.info(String.format("queryEntityNames(%s, %s): %s", entityName, query, result.toString()));
+		return result;
+	}
+	
+	private final String getEntityName(JsonObject json) {
+		return json.getString("name");
+	}
+	
+	// Note that this currently does not handle paging
+    private final JsonArray queryEntities(String entityName, String query, String... fields) {
+		WebTarget target = client.getApiWorkspaceTarget().path(entityName);
+		if ( StringUtils.isNotBlank(query) ) {
+			// Somewhat strange construct to avoid Jersey interpreting the Octane query as a Jersey template
+			target = target.queryParam("query", "{query}").resolveTemplate("query", query);
+		}
+		if ( fields!=null ) {
+			target = target.queryParam("fields", String.join(",", fields));
+		}
+		JsonObject json = client.httpGetRequest(target, JsonObject.class);
+		return json.getJsonArray("data");
+	}
 }

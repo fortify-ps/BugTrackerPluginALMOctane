@@ -24,6 +24,10 @@
  ******************************************************************************/
 package com.fortify.pub.bugtracker.plugin.alm.octane.client;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 class OctaneApiClientTest {
@@ -35,29 +39,34 @@ class OctaneApiClientTest {
 			client.validateConnection();
 		}
 	}
+	
+	@Test
+	void testGetWorkItemRootNames() throws Exception {
+		OctaneApiClient client = TestHelper.getOctaneApiClient();
+		if ( client!=null ) {
+			List<String> result = client.getWorkItemRootNames();
+			assertTrue(result.contains("Backlog"));
+		}
+	}
+	
+	@Test
+	void testGetEpicNames() throws Exception {
+		OctaneApiClient client = TestHelper.getOctaneApiClient();
+		if ( client!=null ) {
+			List<String> result = client.getEpicNames("Backlog");
+			System.out.println(result);
+		}
+	}
+	
+	@Test
+	void testGetFeatureNames() throws Exception {
+		OctaneApiClient client = TestHelper.getOctaneApiClient();
+		if ( client!=null ) {
+			List<String> result = client.getFeatureNames("Backlog", "Billing");
+			System.out.println(result);
+		}
+	}
 
-	@Test
-	void testGetFeatures() throws Exception {
-		OctaneApiClient client = TestHelper.getOctaneApiClient();
-		if ( client!=null ) {
-			System.out.println(client.getFeatures());
-		}
-	}
 	
-	@Test
-	void testGetPhases() throws Exception {
-		OctaneApiClient client = TestHelper.getOctaneApiClient();
-		if ( client!=null ) {
-			System.out.println(client.getPhases());
-		}
-	}
-	
-	@Test
-	void testGetWorkItems() throws Exception {
-		OctaneApiClient client = TestHelper.getOctaneApiClient();
-		if ( client!=null ) {
-			System.out.println(client.getWorkItems());
-		}
-	}
 
 }

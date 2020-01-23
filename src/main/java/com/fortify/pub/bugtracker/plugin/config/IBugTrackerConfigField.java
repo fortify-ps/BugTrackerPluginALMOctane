@@ -69,10 +69,17 @@ public interface IBugTrackerConfigField {
 	
 	public default URL getURLValue(Map<String, String> bugTrackerConfig) {
 		String value = getValue(bugTrackerConfig);
-		try {
-			return value==null ? null : new URL(value);
-		} catch (MalformedURLException e) {
-			throw new RuntimeException("Error parsing URL "+value, e);
+		if ( value == null ) {
+			return null;
+		} else {
+			if (value.endsWith("/")) {
+	            value = value.substring(0,value.length()-1);
+	        }
+			try {
+				return new URL(value);
+			} catch (MalformedURLException e) {
+				throw new RuntimeException("Error parsing URL "+value, e);
+			}
 		}
 	}
 	

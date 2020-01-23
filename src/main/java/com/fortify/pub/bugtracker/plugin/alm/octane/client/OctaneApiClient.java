@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.pub.bugtracker.plugin.alm.octane.client;
 
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.List;
 
@@ -44,6 +45,8 @@ import com.fortify.pub.bugtracker.support.Bug;
  */
 public class OctaneApiClient implements AutoCloseable {
 	private static final Log LOG = LogFactory.getLog(OctaneApiClient.class);
+	private static final MessageFormat FMT_DEEPLINK = new MessageFormat("{0}/ui/entity-navigation?p={1}/{2}&entityType=work_item&id={3}");
+	public static final MessageFormat FMT_BUG_ID = new MessageFormat("{0}/{1}/{2}");
     private final OctaneHttpClient client;
 
 	public OctaneApiClient(OctaneHttpClient client) {
@@ -54,6 +57,12 @@ public class OctaneApiClient implements AutoCloseable {
     public void close() {
         this.client.close();
     }
+    
+    public static final String getWorkItemDeepLink(OctaneConfig octaneConfig, String workItemId) {
+        return FMT_DEEPLINK.format(new Object[] {
+        		octaneConfig.getBaseUrl().toString(), octaneConfig.getSharedSpaceId(),
+        		octaneConfig.getWorkspaceId(), workItemId});
+	}
     
     /**
      * This method performs a simple, lightweight REST call to validate the connection
@@ -93,28 +102,15 @@ public class OctaneApiClient implements AutoCloseable {
 		return result.getJsonArray("data").getValuesAs(this::getEntityId).get(0);
 	}
 
-    public Bug getIssue(String id) {
-
+    public final Bug getBug(final String id) {
         WebTarget target = client
                 .getApiWorkspaceTarget()
-                .path("issue")
-                .path(id);
+                .path("defects")
+                .path(id)
+                .queryParam("fields", "phase");
 
         JsonObject json = client.httpGetRequest(target, JsonObject.class);
-        return deserializeIssue(json);
-    }
-
-
-    private Bug deserializeIssue(JsonObject issue) {
-
-        String issueId = issue.getString("key");
-        JsonObject fields = issue.getJsonObject("fields");
-        JsonObject status = fields.getJsonObject("status");
-        String bugStatus = status.getString("name");
-        Object resolutionObj = fields.get("resolution");
-        String bugResolution = (resolutionObj instanceof JsonObject) ? ((JsonObject) resolutionObj).getString("name") : resolutionObj.toString();
-
-        return new Bug(issueId, bugStatus, bugResolution);
+        return new Bug(id, json.getJsonObject("phase").getString("id"));
     }
 
 	public final List<String> getWorkItemRootNames() {

@@ -175,7 +175,7 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
 
     private Bug fileBug(Map<String, String> params, UserAuthenticationStore authStore) {
     	try (OctaneApiClient client = getOctaneRestApi(authStore)) {
-        	return new Bug(client.fileBug(octaneBugParamHelper.getBugContents(client, params)), null);
+        	return client.getBug(client.fileBug(octaneBugParamHelper.getBugContents(client, params)));
         }
 	}
 
@@ -184,13 +184,15 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     @Override
     public Bug fetchBugDetails(String bugId, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::fetchBugDetails");
-        return null;
+        try (OctaneApiClient client = getOctaneRestApi(authStore)) {
+        	return client.getBug(bugId);
+        }
     }
 
     @Override
     public String getBugDeepLink(String bugId) {
         LOG.info("XXX OctaneBugTrackerPlugin::getBugDeepLink");
-        return "http://dummy";
+        return OctaneApiClient.getWorkItemDeepLink(octaneApiClientFactory.getOctaneConfig(), bugId);
     }
     
     

@@ -74,7 +74,7 @@ import com.fortify.pub.bugtracker.support.UserAuthenticationStore;
  */
 public class OctaneHttpClient implements Closeable {
     private final Client client;
-	private OctaneConfig octaneConfig;
+	private final OctaneConfig octaneConfig;
 
     public OctaneHttpClient(OctaneConfig octaneConfig, UserAuthenticationStore authStore, ProxyConfig proxyConfig) {
     	Validate.notNull(octaneConfig, "Octane configuration must be specified");
@@ -187,16 +187,20 @@ public class OctaneHttpClient implements Closeable {
         return webTarget.request(MediaType.APPLICATION_JSON).post(Entity.json(data), returnType);
     }
     
-    public WebTarget getBaseTarget() {
+    public OctaneConfig getOctaneConfig() {
+		return octaneConfig;
+	}
+
+	public WebTarget getBaseTarget() {
     	return client.target(getBaseUrlAsString());
     }
     
     public WebTarget getApiWorkspaceTarget() {
     	return getBaseTarget()
     				.path("/api/shared_spaces/")
-    				.path(octaneConfig.getSharedSpaceId())
+    				.path(getOctaneConfig().getSharedSpaceId())
     				.path("/workspaces/")
-    				.path(octaneConfig.getWorkspaceId());
+    				.path(getOctaneConfig().getWorkspaceId());
     }
 
 	public final String getBaseUrlAsString() {
@@ -204,6 +208,6 @@ public class OctaneHttpClient implements Closeable {
 	}
 
 	public final URL getBaseUrl() {
-		return octaneConfig.getBaseUrl();
+		return getOctaneConfig().getBaseUrl();
 	}
 }

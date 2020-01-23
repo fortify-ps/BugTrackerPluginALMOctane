@@ -39,9 +39,11 @@ the plugins currently bundled with SSC.
       to be built without having to install an old Gradle version, Gradle 
       Wrapper scripts were added to this project.
 * lib-folder:
-    * Jettison dependencies have been removed
-    * JSON-P dependencies have been added; compared to Jettison, JSON-P provides
+    * Removed Jettison dependencies
+    * Added JSON-P dependencies; compared to Jettison, JSON-P provides
       nice builder patterns and doesn't throw JSONExceptions everywhere
+    * Added commons-lang3-3.9 dependency, as it provides more features than
+      the already included commons-lang-2.6 dependency
 * Source code:
     * Much of the non-JIRA-specific code from the SSC JIRA plugin has been re-used
       in this ALM Octane plugin, like handling connections to the target system, using

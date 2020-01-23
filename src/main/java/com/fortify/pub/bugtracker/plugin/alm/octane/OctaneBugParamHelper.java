@@ -29,7 +29,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonValue;
+
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClient;
@@ -38,7 +43,6 @@ import com.fortify.pub.bugtracker.support.BugParamChoice;
 import com.fortify.pub.bugtracker.support.BugParamText;
 import com.fortify.pub.bugtracker.support.BugParamTextArea;
 import com.fortify.pub.bugtracker.support.BugTrackerConfig;
-import com.fortify.pub.bugtracker.support.IssueDetail;
 
 public class OctaneBugParamHelper {
 	@FunctionalInterface
@@ -48,8 +52,8 @@ public class OctaneBugParamHelper {
 	
 	private static enum BugTrackerField {
 		TYPE(BugParamChoice.class, "Type", "Defect", null, "Defect"),
-		ROOT(BugParamChoice.class, "Root", null, (helper,client,bugParams)->helper.updateEpicChoiceList(client, bugParams)),
-		EPIC(BugParamChoice.class, "Epic", null, (helper,client,bugParams)->helper.updateFeatureChoiceList(client, bugParams)),
+		ROOT(BugParamChoice.class, "Root", null, (helper,client,bugParams)->helper.updateEpicParam(client, bugParams)),
+		EPIC(BugParamChoice.class, "Epic", null, (helper,client,bugParams)->helper.updateFeatureParam(client, bugParams)),
 		FEATURE(BugParamChoice.class, "Feature", null, null),
         NAME(BugParamText.class, "Name", "Fix $ATTRIBUTE_CATEGORY$ in $ATTRIBUTE_FILE$", null),
         DESCRIPTION(BugParamTextArea.class, "Description", "Issue Ids: $ATTRIBUTE_INSTANCE_ID$\n$ISSUE_DEEPLINK$", null),
@@ -71,7 +75,7 @@ public class OctaneBugParamHelper {
             this.onChangeHandler = onChangeHandler;
             this.choiceList = Arrays.asList(ArrayUtils.nullToEmpty(choiceList));
         }
-        public String getIdentifier() {
+        private String getIdentifier() {
             return name();
         }
         public BugParam createBugParam() {
@@ -91,10 +95,13 @@ public class OctaneBugParamHelper {
 				throw new RuntimeException("Error instantiating "+type.getName(), e);
 			}
         }
-        public BugParam getCurrentValue(List<BugParam> currentValues) {
+        public BugParam getCurrentBugParam(List<BugParam> currentValues) {
         	return currentValues.stream().filter(this::hasSameId).findFirst().get();
         }
-        public boolean hasSameId(BugParam bugParam) {
+        public String getValue(Map<String, String> values) {
+        	return values.get(getIdentifier());
+        }
+        private boolean hasSameId(BugParam bugParam) {
         	return getIdentifier().equals(bugParam.getIdentifier());
         }
     }
@@ -120,39 +127,82 @@ public class OctaneBugParamHelper {
 		// similar to the Jira bug tracker plugin.
 	}
 
-	public final List<BugParam> getBugParameters(OctaneApiClient client, IssueDetail issueDetail) {
+	public final List<BugParam> getBugParameters(OctaneApiClient client) {
 		List<BugParam> bugParams = new ArrayList<>(BugTrackerField.values().length);
 		for ( BugTrackerField field : BugTrackerField.values() ) {
 			bugParams.add(field.createBugParam());
 		}
-		updateRootChoiceList(client, bugParams);
+		updateRootParam(client, bugParams);
         return bugParams;
 	}
 
-	public List<BugParam> onParameterChange(OctaneApiClient client, IssueDetail issueDetail, String changedParamIdentifier, List<BugParam> currentValues) {
+	public List<BugParam> onParameterChange(OctaneApiClient client, String changedParamIdentifier, List<BugParam> currentValues) {
 		BugTrackerField.valueOf(changedParamIdentifier).onChangeHandler.onChange(this, client, currentValues);
 		return currentValues;
 	}
 	
-	private final void updateRootChoiceList(OctaneApiClient client, List<BugParam> bugParams) {
-		updateChoiceList(BugTrackerField.ROOT.getCurrentValue(bugParams), client.getWorkItemRootNames());
-		updateEpicChoiceList(client, bugParams);
+	private final void updateRootParam(OctaneApiClient client, List<BugParam> bugParams) {
+		BugParam rootParam = BugTrackerField.ROOT.getCurrentBugParam(bugParams);
+		rootParam.setRequired(true);
+		updateChoiceList(rootParam, client.getWorkItemRootNames());
+		updateEpicParam(client, bugParams);
 	}
 	
-	private final void updateEpicChoiceList(OctaneApiClient client, List<BugParam> bugParams) {
-		String rootName = BugTrackerField.ROOT.getCurrentValue(bugParams).getValue();
-		updateChoiceList(BugTrackerField.EPIC.getCurrentValue(bugParams), client.getEpicNames(rootName));
-		updateFeatureChoiceList(client, bugParams);
+	private final void updateEpicParam(OctaneApiClient client, List<BugParam> bugParams) {
+		String rootName = BugTrackerField.ROOT.getCurrentBugParam(bugParams).getValue();
+		BugParam epicParam = BugTrackerField.EPIC.getCurrentBugParam(bugParams);
+		updateChoiceList(epicParam, client.getEpicNames(rootName));
+		updateFeatureParam(client, bugParams);
 	}
 	
-	private final void updateFeatureChoiceList(OctaneApiClient client, List<BugParam> bugParams) {
-		String rootName = BugTrackerField.ROOT.getCurrentValue(bugParams).getValue();
-		String epicName = BugTrackerField.EPIC.getCurrentValue(bugParams).getValue();
-		updateChoiceList(BugTrackerField.FEATURE.getCurrentValue(bugParams), client.getFeatureNames(rootName, epicName));
+	private final void updateFeatureParam(OctaneApiClient client, List<BugParam> bugParams) {
+		String rootName = BugTrackerField.ROOT.getCurrentBugParam(bugParams).getValue();
+		String epicName = BugTrackerField.EPIC.getCurrentBugParam(bugParams).getValue();
+		BugParam featureParam = BugTrackerField.FEATURE.getCurrentBugParam(bugParams);
+		updateChoiceList(featureParam, client.getFeatureNames(rootName, epicName));
+		featureParam.setRequired(StringUtils.isNotBlank(epicName));
 	}
 	
 	private final void updateChoiceList(BugParam bugParam, List<String> choiceList) {
 		Validate.isInstanceOf(BugParamChoice.class, bugParam, "Cannot update choice list for bug paramater type "+bugParam.getClass().getName());
 		((BugParamChoice)bugParam).setChoiceList(choiceList);
+	}
+
+	public JsonObject getBugContents(OctaneApiClient client, Map<String, String> params) {
+		return Json.createObjectBuilder()
+				.add("parent", getParent(client, params))
+				.add("phase", getPhase(client, params))
+				.add("name", BugTrackerField.NAME.getValue(params))
+				.add("description", BugTrackerField.DESCRIPTION.getValue(params))
+				.build();
+	}
+
+	private JsonValue getPhase(OctaneApiClient client, Map<String, String> params) {
+		return Json.createObjectBuilder()
+			.add("type", "phase")
+			.add("id", "phase.defect.new")
+			.build();
+	}
+
+	private JsonValue getParent(OctaneApiClient client, Map<String, String> params) {
+		String rootName = BugTrackerField.ROOT.getValue(params);
+		String epicName = BugTrackerField.EPIC.getValue(params);
+		String featureName = BugTrackerField.FEATURE.getValue(params);
+		if ( StringUtils.isNotBlank(featureName) ) {
+			return getParent("feature", client.getFeatureId(rootName, epicName, featureName));
+		} else if ( StringUtils.isNotBlank(epicName) ) {
+			return getParent("epic", client.getEpicId(rootName, epicName));
+		} else if ( StringUtils.isNotBlank(rootName) ) {
+			return getParent("work_item_root", client.getWorkItemRootId(rootName));
+		} else {
+			throw new IllegalArgumentException("No parent defined for defect");
+		}
+	}
+
+	private JsonValue getParent(String type, String id) {
+		return Json.createObjectBuilder()
+				.add("type", type)
+				.add("id", id)
+				.build();
 	}
 }

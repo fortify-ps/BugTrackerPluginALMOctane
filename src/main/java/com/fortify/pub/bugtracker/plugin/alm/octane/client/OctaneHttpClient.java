@@ -184,9 +184,7 @@ public class OctaneHttpClient implements Closeable {
 
 
     public <T> T httpPostRequest(WebTarget webTarget, JsonObject data, Class<T> returnType){
-        Invocation.Builder invocationBuilder =  webTarget.request(MediaType.APPLICATION_JSON);
-        Entity<String> entity = Entity.json(data.toString());
-        return invocationBuilder.post(entity, returnType);
+        return webTarget.request(MediaType.APPLICATION_JSON).post(Entity.json(data), returnType);
     }
     
     public WebTarget getBaseTarget() {

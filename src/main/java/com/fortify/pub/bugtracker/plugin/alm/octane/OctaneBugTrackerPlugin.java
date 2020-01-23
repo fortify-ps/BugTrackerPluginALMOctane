@@ -54,42 +54,9 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     private OctaneBugParamHelper octaneBugParamHelper;
 
     public OctaneBugTrackerPlugin() {}
-
-    @Override
-    public Bug fetchBugDetails(String bugId, UserAuthenticationStore authStore) {
-        LOG.info("XXX OctaneBugTrackerPlugin::fetchBugDetails");
-        return null;
-    }
-
-    @Override
-    public Bug fileBug(BugSubmission bugSubmission, UserAuthenticationStore authStore) {
-        LOG.info("XXX OctaneBugTrackerPlugin::fileBug");
-        return null;
-    }
-
-    @Override
-    public List<BugParam> getBugParameters(IssueDetail issueDetail, UserAuthenticationStore authStore) {
-        LOG.info("XXX OctaneBugTrackerPlugin::getBugParameters");
-        try (OctaneApiClient client = getOctaneRestApi(authStore)) {
-        	return octaneBugParamHelper.getBugParameters(client, issueDetail);
-        }
-    }
-
-    @Override
-    public List<BugTrackerConfig> getConfiguration() {
-        List<BugTrackerConfig> result = new ArrayList<>();
-        BugTrackerOctaneApiClientFactory.addBugTrackerConfigFields(result);
-        OctaneBugParamHelper.addBugTrackerConfigFields(result);
-        pluginHelper.populateWithDefaultsIfAvailable(result);
-        return result;
-    }
-
-    @Override
-    public void setConfiguration(Map<String, String> config) {
-        this.octaneApiClientFactory = new BugTrackerOctaneApiClientFactory(config);
-        this.octaneBugParamHelper = new OctaneBugParamHelper(config);
-    }
-
+    
+    // === Methods for providing generic information about this bug tracker plugin ==== 
+    
     @Override
     public boolean requiresAuthentication() {
         return true;
@@ -108,15 +75,26 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     public String getShortDisplayName() {
         return "ALM Octane";
     }
+    
 
+    
+    // ==== Configuration-related methods ====
+    
     @Override
-    public List<BugParam> onParameterChange(IssueDetail issueDetail, String changedParamIdentifier, List<BugParam> currentValues, UserAuthenticationStore authStore) {
-        LOG.info("XXX OctaneBugTrackerPlugin::onParameterChange");
-        try (OctaneApiClient client = getOctaneRestApi(authStore)) {
-        	return octaneBugParamHelper.onParameterChange(client, issueDetail, changedParamIdentifier, currentValues);
-        }
+    public List<BugTrackerConfig> getConfiguration() {
+        List<BugTrackerConfig> result = new ArrayList<>();
+        BugTrackerOctaneApiClientFactory.addBugTrackerConfigFields(result);
+        OctaneBugParamHelper.addBugTrackerConfigFields(result);
+        pluginHelper.populateWithDefaultsIfAvailable(result);
+        return result;
     }
-
+    
+    @Override
+    public void setConfiguration(Map<String, String> config) {
+        this.octaneApiClientFactory = new BugTrackerOctaneApiClientFactory(config);
+        this.octaneBugParamHelper = new OctaneBugParamHelper(config);
+    }
+    
     @Override
     public void testConfiguration(UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::testConfiguration");
@@ -128,54 +106,96 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
         LOG.info("XXX OctaneBugTrackerPlugin::validateCredentials");
         validateOctaneConnection(authStore);
     }
+    
+    private final void validateOctaneConnection(final UserAuthenticationStore authStore) {
+    	try (OctaneApiClient client = getOctaneRestApi(authStore)) {
+            client.validateConnection();
+        }
+    }
+    
+    private final OctaneApiClient getOctaneRestApi(final UserAuthenticationStore authStore) {
+		return octaneApiClientFactory.getOctaneRestApi(authStore);
+	}
+    
+    
+    
+    // ==== Methods for generating and updating BugParam instances ==== 
+    
+    @Override
+    public List<BugParam> getBugParameters(IssueDetail issueDetail, UserAuthenticationStore authStore) {
+        LOG.info("XXX OctaneBugTrackerPlugin::getBugParameters");
+        return getBugParameters(authStore);
+    }
+    
+    @Override
+    public List<BugParam> getBatchBugParameters(UserAuthenticationStore authStore) {
+        LOG.info("XXX OctaneBugTrackerPlugin::getBatchBugParameters");
+        return getBugParameters(authStore);
+    }
+
+	private List<BugParam> getBugParameters(UserAuthenticationStore authStore) {
+		try (OctaneApiClient client = getOctaneRestApi(authStore)) {
+        	return octaneBugParamHelper.getBugParameters(client);
+        }
+	}
+	
+	@Override
+    public List<BugParam> onBatchBugParameterChange(String changedParamIdentifier, List<BugParam> currentValues, UserAuthenticationStore authStore) {
+        LOG.info("XXX OctaneBugTrackerPlugin::onBatchBugParameterChange");
+        return onParameterChange(changedParamIdentifier, currentValues, authStore);
+    }
+
+    @Override
+    public List<BugParam> onParameterChange(IssueDetail issueDetail, String changedParamIdentifier, List<BugParam> currentValues, UserAuthenticationStore authStore) {
+        LOG.info("XXX OctaneBugTrackerPlugin::onParameterChange");
+        return onParameterChange(changedParamIdentifier, currentValues, authStore);
+    }
+
+	private List<BugParam> onParameterChange(String changedParamIdentifier, List<BugParam> currentValues, UserAuthenticationStore authStore) {
+		try (OctaneApiClient client = getOctaneRestApi(authStore)) {
+        	return octaneBugParamHelper.onParameterChange(client, changedParamIdentifier, currentValues);
+        }
+	}
+
+    
+    
+    // ==== Methods for submitting bugs ====
+
+    @Override
+    public Bug fileBug(final BugSubmission bugSubmission, final UserAuthenticationStore authStore) {
+    	LOG.info("XXX OctaneBugTrackerPlugin::fileBug");
+        return fileBug(bugSubmission.getParams(), authStore);
+    }
+
+    @Override
+    public Bug fileMultiIssueBug(final MultiIssueBugSubmission multiIssueBugSubmission, final UserAuthenticationStore authStore) {
+    	LOG.info("XXX OctaneBugTrackerPlugin::fileMultiIssueBug");
+        return fileBug(multiIssueBugSubmission.getParams(), authStore);
+    }
+
+    private Bug fileBug(Map<String, String> params, UserAuthenticationStore authStore) {
+    	try (OctaneApiClient client = getOctaneRestApi(authStore)) {
+        	return new Bug(client.fileBug(octaneBugParamHelper.getBugContents(client, params)), null);
+        }
+	}
+
+	// ==== Methods for getting information about previously submitted bugs ====
+    
+    @Override
+    public Bug fetchBugDetails(String bugId, UserAuthenticationStore authStore) {
+        LOG.info("XXX OctaneBugTrackerPlugin::fetchBugDetails");
+        return null;
+    }
 
     @Override
     public String getBugDeepLink(String bugId) {
         LOG.info("XXX OctaneBugTrackerPlugin::getBugDeepLink");
         return "http://dummy";
     }
+    
+    
 
-    @Override
-    public List<BugParam> getBatchBugParameters(UserAuthenticationStore authStore) {
-        LOG.info("XXX OctaneBugTrackerPlugin::getBatchBugParameters");
-        return getBugParameters(null, authStore);
-    }
-
-    @Override
-    public List<BugParam> onBatchBugParameterChange(String changedParamIdentifier, List<BugParam> currentValues, UserAuthenticationStore authStore) {
-        LOG.info("XXX OctaneBugTrackerPlugin::onBatchBugParameterChange");
-        return onParameterChange(null, changedParamIdentifier, currentValues, authStore);
-    }
-
-    @Override
-    public Bug fileMultiIssueBug(MultiIssueBugSubmission bugSubmission, UserAuthenticationStore authStore) {
-        LOG.info("XXX OctaneBugTrackerPlugin::fileMultiIssueBug");
-        try ( OctaneApiClient conn = getOctaneRestApi(authStore) ) {
-        	//conn.
-        	/*
-        	
-
-        EntityList defectList = octane.entityList("defects");
-
-        FieldModel<String> nameField = new StringFieldModel("name", bugSubmission.getIssueDetails().get(0).getCategory());
-        FieldModel<EntityModel> parentField =
-                new ReferenceFieldModel("parent",
-                        new EntityModel(new HashSet<>(Arrays.asList(
-                                new StringFieldModel("type", "work_item_root"),
-                                new StringFieldModel("id", "1001")))));
-        Set<FieldModel> entityFields = new HashSet<>(Arrays.asList(nameField, parentField));
-        EntityModel entityModel = new EntityModel(entityFields);
-        Collection<EntityModel> createdEntities =
-                defectList.create()
-                        .entities(new ArrayList<>(Collections.singletonList(entityModel)))
-                        .execute();
-
-        return new Bug(createdEntities.iterator().next().getId(), "open");
-        	 */
-        }
-
-        return null;
-    }
+    // ==== Methods for bug state management ====
 
 	@Override
     public boolean isBugOpen(Bug bug, UserAuthenticationStore authStore) {
@@ -203,18 +223,6 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     @Override
     public void addCommentToBug(Bug bug, String comment, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::addCommentToBug");
-    }
-    
-    
-    
-    private final OctaneApiClient getOctaneRestApi(final UserAuthenticationStore authStore) {
-		return octaneApiClientFactory.getOctaneRestApi(authStore);
-	}
-    
-    private final void validateOctaneConnection(final UserAuthenticationStore authStore) {
-    	try (OctaneApiClient client = getOctaneRestApi(authStore)) {
-            client.validateConnection();
-        }
     }
 
 }

@@ -33,9 +33,9 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.glassfish.jersey.internal.util.Producer;
 
 import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClient;
 import com.fortify.pub.bugtracker.support.BugParam;
@@ -51,49 +51,61 @@ public class OctaneBugParamHelper {
 	}
 	
 	private static enum BugTrackerField {
-		TYPE(BugParamChoice.class, "Type", "Defect", null, "Defect"),
-		ROOT(BugParamChoice.class, "Root", null, (helper,client,bugParams)->helper.updateEpicParam(client, bugParams)),
-		EPIC(BugParamChoice.class, "Epic", null, (helper,client,bugParams)->helper.updateFeatureParam(client, bugParams)),
-		FEATURE(BugParamChoice.class, "Feature", null, null),
-        NAME(BugParamText.class, "Name", "Fix $ATTRIBUTE_CATEGORY$ in $ATTRIBUTE_FILE$", null),
-        DESCRIPTION(BugParamTextArea.class, "Description", "Issue Ids: $ATTRIBUTE_INSTANCE_ID$\n$ISSUE_DEEPLINK$", null),
+		TYPE(BugTrackerField::createBugParamType),
+		ROOT(BugTrackerField::createBugParamRoot, (helper,client,bugParams)->helper.updateEpicParam(client, bugParams)),
+		EPIC(BugTrackerField::createBugParamEpic, (helper,client,bugParams)->helper.updateFeatureParam(client, bugParams)),
+		FEATURE(BugTrackerField::createBugParamFeature),
+        NAME(BugTrackerField::createBugParamName),
+        DESCRIPTION(BugTrackerField::createBugParamDescription),
         ;
+		
+		private static final BugParamChoice createBugParamType() {
+			return (BugParamChoice)new BugParamChoice().setChoiceList(Arrays.asList("Defect"))
+					.setDisplayLabel("Type").setValue("Defect").setRequired(true);
+		}
+		
+		private static final BugParamChoice createBugParamRoot() {
+			return (BugParamChoice)new BugParamChoice().setDisplayLabel("Root").setRequired(true);
+		}
+		
+		private static final BugParamChoice createBugParamEpic() {
+			return (BugParamChoice)new BugParamChoice().setDisplayLabel("Epic");
+		}
+		
+		private static final BugParamChoice createBugParamFeature() {
+			return (BugParamChoice)new BugParamChoice().setDisplayLabel("Feature");
+		}
+		
+		private static final BugParam createBugParamName() {
+			return new BugParamText().setDisplayLabel("Name").setMaxLength(254).setRequired(true)
+					.setValue("Fix $ATTRIBUTE_CATEGORY$ in $ATTRIBUTE_FILE$");
+		}
+		
+		private static final BugParam createBugParamDescription() {
+			return new BugParamTextArea().setDisplayLabel("Description").setRequired(true)
+					.setValue("Issue Ids: $ATTRIBUTE_INSTANCE_ID$\\n$ISSUE_DEEPLINK$");
+		}
 
-		private final Class<? extends BugParam> type;
-        private final String displayLabel;
-        private final String defaultValue;
+		private final Producer<? extends BugParam> bugParamProducer;
         private final BugParamFieldOnChangeHandler onChangeHandler;
-        private final List<String> choiceList;
-        BugTrackerField(final Class<? extends BugParam> type, final String displayLabel, final String defaultValue, BugParamFieldOnChangeHandler onChangeHandler, String... choiceList) {
-        	Validate.isTrue(onChangeHandler==null || BugParamChoice.class.isAssignableFrom(type), 
-        			"Only BugParamChoice instances can have an onChange handler");
-        	Validate.isTrue(ArrayUtils.isEmpty(choiceList) || BugParamChoice.class.isAssignableFrom(type), 
-        			"Only BugParamChoice instances can have a choice list");
-        	this.type = type;
-            this.displayLabel = displayLabel;
-            this.defaultValue = defaultValue;
-            this.onChangeHandler = onChangeHandler;
-            this.choiceList = Arrays.asList(ArrayUtils.nullToEmpty(choiceList));
+        BugTrackerField(Producer<? extends BugParamChoice> bugParamProducer, BugParamFieldOnChangeHandler onChangeHandler) {
+        	this.bugParamProducer = bugParamProducer;
+        	this.onChangeHandler = onChangeHandler;
+        }
+        BugTrackerField(Producer<? extends BugParam> bugParamProducer) {
+        	this.bugParamProducer = bugParamProducer;
+        	this.onChangeHandler = null;
         }
         private String getIdentifier() {
             return name();
         }
         public BugParam createBugParam() {
-        	try {
-				BugParam result = type.newInstance()
-					.setIdentifier(getIdentifier())
-					.setDisplayLabel(displayLabel)
-					.setValue(defaultValue);
-				if ( onChangeHandler!=null ) {
-					((BugParamChoice)result).setHasDependentParams(true);
-				}
-				if ( choiceList.size()>0 ) {
-					((BugParamChoice)result).setChoiceList(choiceList);
-				}
-				return result;
-			} catch (InstantiationException | IllegalAccessException e) {
-				throw new RuntimeException("Error instantiating "+type.getName(), e);
+        	BugParam result = bugParamProducer.call();
+        	result.setIdentifier(getIdentifier());
+			if ( onChangeHandler!=null ) {
+				((BugParamChoice)result).setHasDependentParams(true);
 			}
+			return result;
         }
         public BugParam getCurrentBugParam(List<BugParam> currentValues) {
         	return currentValues.stream().filter(this::hasSameId).findFirst().get();

@@ -27,6 +27,14 @@ package com.fortify.pub.bugtracker.plugin.alm.octane.client;
 import org.junit.jupiter.api.Test;
 
 class OctaneApiClientTest {
+	
+	@Test
+	void testValidateConnection() throws Exception {
+		OctaneApiClient client = TestHelper.getOctaneApiClient();
+		if ( client!=null ) {
+			client.validateConnection();
+		}
+	}
 
 	@Test
 	void testGetFeatures() throws Exception {

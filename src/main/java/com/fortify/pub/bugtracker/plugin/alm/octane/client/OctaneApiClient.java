@@ -46,6 +46,17 @@ public class OctaneApiClient implements AutoCloseable {
         this.client.close();
     }
     
+    /**
+     * This method performs a simple, lightweight REST call to validate the connection
+     */
+    public void validateConnection() {
+    	WebTarget target = client.getApiWorkspaceTarget()
+    			.path("work_item_roots")
+    			.queryParam("fields", "type")
+    			.queryParam("limit", 1);
+    	client.httpGetRequest(target, JsonObject.class);
+    }
+    
     private final JsonArray getEntities(String entityName) {
 		WebTarget target = client.getApiWorkspaceTarget().path(entityName);
 		JsonObject json = client.httpGetRequest(target, JsonObject.class);

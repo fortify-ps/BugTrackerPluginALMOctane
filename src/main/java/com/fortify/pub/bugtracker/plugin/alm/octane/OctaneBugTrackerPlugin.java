@@ -41,6 +41,7 @@ import com.fortify.pub.bugtracker.support.BugParam;
 import com.fortify.pub.bugtracker.support.BugParamChoice;
 import com.fortify.pub.bugtracker.support.BugSubmission;
 import com.fortify.pub.bugtracker.support.BugTrackerConfig;
+import com.fortify.pub.bugtracker.support.BugTrackerException;
 import com.fortify.pub.bugtracker.support.IssueDetail;
 import com.fortify.pub.bugtracker.support.MultiIssueBugSubmission;
 import com.fortify.pub.bugtracker.support.UserAuthenticationStore;
@@ -58,19 +59,19 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     public OctaneBugTrackerPlugin() {}
 
     @Override
-    public Bug fetchBugDetails(String bugId, UserAuthenticationStore credentials) {
+    public Bug fetchBugDetails(String bugId, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::fetchBugDetails");
         return null;
     }
 
     @Override
-    public Bug fileBug(BugSubmission bugSubmission, UserAuthenticationStore credentials) {
+    public Bug fileBug(BugSubmission bugSubmission, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::fileBug");
         return null;
     }
 
     @Override
-    public List<BugParam> getBugParameters(IssueDetail issueDetail, UserAuthenticationStore credentials) {
+    public List<BugParam> getBugParameters(IssueDetail issueDetail, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::getBugParameters");
         /* You need at least one bug parameter, otherwise you get an NPE in SSC. */
         List<BugParam> bugParams = new ArrayList<>();
@@ -119,21 +120,22 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
 
     @Override
     public List<BugParam> onParameterChange(IssueDetail issueDetail, String changedParamIdentifier
-            , List<BugParam> currentValues, UserAuthenticationStore credentials) {
+            , List<BugParam> currentValues, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::onParameterChange");
         List<BugParam> returnParams = new ArrayList<>();
         return returnParams;
     }
 
     @Override
-    public void testConfiguration(com.fortify.pub.bugtracker.support.UserAuthenticationStore credentials) {
+    public void testConfiguration(UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::testConfiguration");
-        validateCredentials(credentials);
+        validateOctaneConnection(authStore);
     }
 
     @Override
-    public void validateCredentials(UserAuthenticationStore credentials) throws RuntimeException {
+    public void validateCredentials(UserAuthenticationStore authStore) throws RuntimeException {
         LOG.info("XXX OctaneBugTrackerPlugin::validateCredentials");
+        validateOctaneConnection(authStore);
     }
 
     @Override
@@ -143,21 +145,21 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     }
 
     @Override
-    public List<BugParam> getBatchBugParameters(UserAuthenticationStore credentials) {
+    public List<BugParam> getBatchBugParameters(UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::getBatchBugParameters");
-        return getBugParameters(null, credentials);
+        return getBugParameters(null, authStore);
     }
 
     @Override
-    public List<BugParam> onBatchBugParameterChange(String changedParamIdentifier, List<BugParam> currentValues, UserAuthenticationStore credentials) {
+    public List<BugParam> onBatchBugParameterChange(String changedParamIdentifier, List<BugParam> currentValues, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::onBatchBugParameterChange");
-        return onParameterChange(null, changedParamIdentifier, currentValues, credentials);
+        return onParameterChange(null, changedParamIdentifier, currentValues, authStore);
     }
 
     @Override
     public Bug fileMultiIssueBug(MultiIssueBugSubmission bugSubmission, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::fileMultiIssueBug");
-        try ( OctaneApiClient conn = getOctaneRestConnector(authStore) ) {
+        try ( OctaneApiClient conn = getOctaneRestApi(authStore) ) {
         	//conn.
         	/*
         	
@@ -185,35 +187,43 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     }
 
 	@Override
-    public boolean isBugOpen(Bug bug, UserAuthenticationStore credentials) {
+    public boolean isBugOpen(Bug bug, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::isBugOpen");
         return true;
     }
 
     @Override
-    public boolean isBugClosed(Bug bug, UserAuthenticationStore credentials) {
+    public boolean isBugClosed(Bug bug, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::isBugClosed");
         return false;
     }
 
     @Override
-    public boolean isBugClosedAndCanReOpen(Bug bug, UserAuthenticationStore credentials) {
+    public boolean isBugClosedAndCanReOpen(Bug bug, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::isBugClosedAndCanReOpen");
         return false;
     }
 
     @Override
-    public void reOpenBug(Bug bug, String comment, UserAuthenticationStore credentials) {
+    public void reOpenBug(Bug bug, String comment, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::reOpenBug");
     }
 
     @Override
-    public void addCommentToBug(Bug bug, String comment, UserAuthenticationStore credentials) {
+    public void addCommentToBug(Bug bug, String comment, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::addCommentToBug");
     }
     
-    private final OctaneApiClient getOctaneRestConnector(final UserAuthenticationStore authStore) {
+    private final OctaneApiClient getOctaneRestApi(final UserAuthenticationStore authStore) {
 		return octaneApiClientFactory.getOctaneRestApi(authStore);
 	}
+    
+    private final void validateOctaneConnection(final UserAuthenticationStore authStore) {
+    	try (OctaneApiClient client = getOctaneRestApi(authStore)) {
+            client.validateConnection();
+        } catch (Exception e) {
+            throw new BugTrackerException("There was an error validating the TFS provided config", e);
+        }
+    }
 
 }

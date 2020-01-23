@@ -30,6 +30,16 @@ configuration under SSC Administration->Templates->Bug Filing:
     
 ![Screenshot](https://github.com/fortify-ps/BugTrackerPluginALMOctane/raw/master/SSC-templatesbugfields.png "Screenshot")
 
+## Upgrading the plugin
+
+During active development, the plugin version number will not be updated. As SSC disallows re-installing a plugin
+if the same version has already been installed, you will need to follow the following steps if you want to install
+a more recent build of the plugin:
+
+* Disable the plugin in SSC
+* Remove the plugin in SSC
+* Install the new plugin build in SSC
+* Enable the new plugin build in SSC 
 
 ## Comparison with other SSC bug tracker plugins
 

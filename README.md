@@ -38,11 +38,10 @@ the plugins currently bundled with SSC.
       likely have already upgraded to Gradle 5.x or 6.x. To allow this project
       to be built without having to install an old Gradle version, Gradle 
       Wrapper scripts were added to this project.
-* Dependencies:
-    * Plugin dependencies are mostly the same, with the following exceptions:
-         * Jettison has been replaced with JSON-P, mostly for its builder pattern
-           and to avoid having to handle JSONExceptions everywhere
-         * JUnit dependencies have been added to enable JUnit tests
+* lib-folder:
+    * Jettison dependencies have been removed
+    * JSON-P dependencies have been added; compared to Jettison, JSON-P provides
+      nice builder patterns and doesn't throw JSONExceptions everywhere
 * Source code:
     * Much of the non-JIRA-specific code from the SSC JIRA plugin has been re-used
       in this ALM Octane plugin, like handling connections to the target system, using

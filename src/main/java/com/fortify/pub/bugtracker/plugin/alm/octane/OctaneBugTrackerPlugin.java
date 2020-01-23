@@ -114,7 +114,7 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
 
     @Override
     public String getShortDisplayName() {
-        return "Octane";
+        return "ALM Octane";
     }
 
     @Override

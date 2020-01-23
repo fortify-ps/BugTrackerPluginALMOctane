@@ -3,6 +3,6 @@
 
 <plugin>
     <extension point="com.fortify.awb.bugtracker">
-        <bugtracker class="com.fortify.pub.bugtracker.plugin.alm.octane.ALMOctaneBatchBugTrackerPlugin" />
+        <bugtracker class="com.fortify.pub.bugtracker.plugin.alm.octane.OctaneBugTrackerPlugin" />
     </extension>
 </plugin>

@@ -7,7 +7,7 @@ This project is not yet functional; please check back later.
 This project provides an SSC Bug Tracker Plugin implementation for submitting vulnerabilities 
 from Fortify SSC to ALM Octane. 
 
-## Build from source
+## Building & installing the plugin
 
 To build this project, run `gradlew clean build`. This will generate the plugin jar in the `build`
 directory; this plugin jar can be uploaded to SSC under SSC Administration->Plugins->Bug Tracking.
@@ -18,6 +18,18 @@ The ALM Octane connection can be configured by passing the following property de
 a Gradle build:
 
 `gradlew clean build -DoctaneUrl=http://host:port/ -DoctaneSharedSpaceId=1001 -DoctaneWorkspaceId=1002 -DoctaneUserName=myuser -DoctanePassword=mypassword`
+
+Once the plugin has been installed in SSC for the first time, you will need to add the following 
+configuration under SSC Administration->Templates->Bug Filing:
+
+* Bug Tracker Plugin: ALM Octane
+* Description: Templates for ALM Octane text fields
+* Mapped Fields:
+    * Description: For now, copy from the Description field for the JIRA template
+    * Name: For now, copy from the Summary field for the JIRA template
+    
+![Screenshot](SSC-templatesbugfiels.png "Screenshot")
+
 
 ## Comparison with other SSC bug tracker plugins
 

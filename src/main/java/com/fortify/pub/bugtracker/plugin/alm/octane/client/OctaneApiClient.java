@@ -118,8 +118,7 @@ public class OctaneApiClient implements AutoCloseable {
 	}
 
 	public List<String> getFeatureNames(String rootName, String epicName) {
-		//final String query = String.format("\"parent EQ {name EQ '%s' ; parent EQ {name EQ '%s'}}\"", epicName, rootName);
-		final String query = String.format("\"parent EQ {name EQ '%s' }\"", epicName, rootName);
+		final String query = String.format("\"parent EQ {name EQ '%s' ; parent EQ {name EQ '%s'}}\"", epicName, rootName);
 		return StringUtils.isBlank(rootName) || StringUtils.isBlank(epicName)
 				? Collections.emptyList()
 				: queryEntityNames("features", query);

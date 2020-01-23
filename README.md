@@ -28,7 +28,7 @@ configuration under SSC Administration->Templates->Bug Filing:
     * Description: For now, copy from the Description field for the JIRA template
     * Name: For now, copy from the Summary field for the JIRA template
     
-![Screenshot](SSC-templatesbugfiels.png "Screenshot")
+![Screenshot](https://github.com/fortify-ps/BugTrackerPluginALMOctane/raw/master/SSC-templatesbugfields.png "Screenshot")
 
 
 ## Comparison with other SSC bug tracker plugins

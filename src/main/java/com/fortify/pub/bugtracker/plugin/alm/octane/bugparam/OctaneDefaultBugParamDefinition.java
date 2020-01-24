@@ -94,7 +94,11 @@ enum OctaneDefaultBugParamDefinition implements IBugParamDefinitionProvider<IOct
     static final void updateRootParam(OctaneApiClient client, List<BugParam> bugParams) {
 		BugParam rootParam = OctaneDefaultBugParamDefinition.ROOT.definition().getCurrentBugParam(bugParams);
 		rootParam.setRequired(true);
-		updateChoiceList(rootParam, client.getWorkItemRootNames());
+		List<String> rootChoiceList = client.getWorkItemRootNames();
+		updateChoiceList(rootParam, rootChoiceList);
+		if ( rootChoiceList!=null && rootChoiceList.size()==1 ) {
+			rootParam.setValue(rootChoiceList.get(0));
+		}
 		updateEpicParam(client, bugParams);
 	}
 	

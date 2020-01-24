@@ -41,7 +41,8 @@ import com.fortify.pub.bugtracker.support.BugParamTextArea;
 
 /**
  * This enumeration provides definitions for the default Octane bug parameters. For each enum entry,
- * the {@link IBugParamDefinitionProvider} interface provides various utility methods.
+ * the {@link BugParamDefinition} instance returned by the {@link #definition()} method provides
+ * utility methods for working with that parameter definition.
  * 
  * @author Ruud Senden
  *

@@ -160,19 +160,24 @@ public class OctaneHttpClient implements Closeable {
             .header("ALM_OCTANE_TECH_PREVIEW", "true") // Required for basic authentication
             .buildGet();
 
-        try {
+        return invoke(invocation, returnType);
+    }
+
+	private <T> T invoke(Invocation invocation, Class<T> returnType) {
+		try {
             return invocation.invoke(returnType);
         } catch (WebApplicationException e) {
             int status = e.getResponse().getStatus();
+            String contents = e.getResponse().readEntity(String.class);
             switch (status) {
                 case HttpStatus.SC_UNAUTHORIZED:
-                    throw new BugTrackerAuthenticationException("Octane authentication credentials are invalid");
+                    throw new BugTrackerAuthenticationException("Octane authentication credentials are invalid:\n"+contents);
                 case HttpStatus.SC_PROXY_AUTHENTICATION_REQUIRED:
-                    throw new BugTrackerAuthenticationException("Http(s) proxy authentication credentials are invalid");
+                    throw new BugTrackerAuthenticationException("Http(s) proxy authentication credentials are invalid:\n"+contents);
                 default:
                     throw new BugTrackerException(String.format(
-                            "Unsuccessful response %d returned from Octane (2xx is expected) with message: %s"
-                            , status, e.getMessage()));
+                            "Unsuccessful response %d returned from Octane (2xx is expected) with message: %s\nContents:\n%s"
+                            , status, e.getMessage(), contents));
             }
         } catch (ResponseProcessingException e) {
             e.getResponse().close();
@@ -180,11 +185,15 @@ public class OctaneHttpClient implements Closeable {
         } catch (Exception e) {
             throw new BugTrackerException("Unexpected error when requesting Octane", e);
         }
-    }
+	}
 
 
     public <T> T httpPostRequest(WebTarget webTarget, JsonObject data, Class<T> returnType){
-        return webTarget.request(MediaType.APPLICATION_JSON).post(Entity.json(data), returnType);
+        Invocation invocation = webTarget.request(MediaType.APPLICATION_JSON)
+        		.header("ALM_OCTANE_TECH_PREVIEW", "true") // Required for basic authentication
+        		.buildPost(Entity.json(data));
+        
+        return invoke(invocation, returnType);
     }
     
     public OctaneConfig getOctaneConfig() {

@@ -24,15 +24,46 @@
  ******************************************************************************/
 package com.fortify.pub.bugtracker.plugin.fields;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fortify.pub.bugtracker.support.BugParam;
+
 /**
- * Simple interface that provides a {@link #getIdentifier()} method.
+ * This interface provides access to a {@link BugParamDefinition} instance
+ * through the {@link #definition()} method.
  * 
  * @author Ruud Senden
  *
+ * @param <OnChangeHandler>
  */
-public interface IIdentifier {
+public interface IBugParamDefinitionProvider<OnChangeHandler> {
+	public BugParamDefinition<OnChangeHandler> definition();
+	
 	/**
-	 * @return an identifier
+	 * Static method for adding a {@link BugParam} instance as produced
+	 * by each given {@link IBugParamDefinitionProvider} to the given 
+	 * {@link BugParam} {@link List}.
+	 * 
+	 * @param list
+	 * @param providers
 	 */
-	String getIdentifier();
+	public static void addBugParams(List<BugParam> list, IBugParamDefinitionProvider<?>[] providers) {
+		for ( IBugParamDefinitionProvider<?> provider : providers ) { 
+			list.add(provider.definition().createBugParam()); 
+		}
+	}
+	
+	/**
+	 * Static method for retrieving a {@link List} of {@link BugParam} instances 
+	 * as produced by each given {@link IBugParamDefinitionProvider}.
+	 * 
+	 * @param list
+	 * @param providers
+	 */
+	public static List<BugParam> getBugParams(IBugParamDefinitionProvider<?>[] providers) {
+		List<BugParam> result = new ArrayList<>(providers.length);
+		addBugParams(result, providers);
+		return result;
+	}
 }

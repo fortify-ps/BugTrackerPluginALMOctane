@@ -61,8 +61,8 @@ public class BugTrackerOctaneApiClientFactory {
 	 * @param list
 	 */
     public static final void addBugTrackerConfigFields(List<BugTrackerConfig> list) {
-		OctaneConfigFactory.addBugTrackerConfigFields(list);
-		ProxyConfigFactory.addBugTrackerConfigFields(list);
+		OctaneConfigFactory.addBugTrackerConfigs(list);
+		ProxyConfigFactory.addBugTrackerConfigs(list);
 	}
 
     private final OctaneConfig octaneConfig;

@@ -32,7 +32,8 @@ import org.apache.commons.lang3.Validate;
 import org.glassfish.jersey.internal.util.Producer;
 
 import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClient;
-import com.fortify.pub.bugtracker.plugin.fields.IDefaultMethodsBugParamDefinitionEnum;
+import com.fortify.pub.bugtracker.plugin.fields.BugParamDefinition;
+import com.fortify.pub.bugtracker.plugin.fields.IBugParamDefinitionProvider;
 import com.fortify.pub.bugtracker.support.BugParam;
 import com.fortify.pub.bugtracker.support.BugParamChoice;
 import com.fortify.pub.bugtracker.support.BugParamText;
@@ -40,18 +41,18 @@ import com.fortify.pub.bugtracker.support.BugParamTextArea;
 
 /**
  * This enumeration provides definitions for the default Octane bug parameters. For each enum entry,
- * the {@link IDefaultMethodsBugParamDefinitionEnum} interface provides various utility methods.
+ * the {@link IBugParamDefinitionProvider} interface provides various utility methods.
  * 
  * @author Ruud Senden
  *
  */
-enum OctaneDefaultBugParams implements IDefaultMethodsBugParamDefinitionEnum<IOctaneBugParamChoiceOnChangeHandler> {
-	TYPE(OctaneDefaultBugParams::createBugParamType, null),
-	ROOT(OctaneDefaultBugParams::createBugParamRoot, OctaneDefaultBugParams::updateEpicParam),
-	EPIC(OctaneDefaultBugParams::createBugParamEpic, OctaneDefaultBugParams::updateFeatureParam),
-	FEATURE(OctaneDefaultBugParams::createBugParamFeature, null),
-    NAME(OctaneDefaultBugParams::createBugParamName, null),
-    DESCRIPTION(OctaneDefaultBugParams::createBugParamDescription, null),
+enum OctaneDefaultBugParamDefinition implements IBugParamDefinitionProvider<IOctaneBugParamChoiceOnChangeHandler> {
+	TYPE(OctaneDefaultBugParamDefinition::createBugParamType, null),
+	ROOT(OctaneDefaultBugParamDefinition::createBugParamRoot, OctaneDefaultBugParamDefinition::updateEpicParam),
+	EPIC(OctaneDefaultBugParamDefinition::createBugParamEpic, OctaneDefaultBugParamDefinition::updateFeatureParam),
+	FEATURE(OctaneDefaultBugParamDefinition::createBugParamFeature, null),
+    NAME(OctaneDefaultBugParamDefinition::createBugParamName, null),
+    DESCRIPTION(OctaneDefaultBugParamDefinition::createBugParamDescription, null),
     ;
 	
 	private static final BugParamChoice createBugParamType() {
@@ -82,32 +83,32 @@ enum OctaneDefaultBugParams implements IDefaultMethodsBugParamDefinitionEnum<IOc
 	}
 
 	private final BugParamDefinition<IOctaneBugParamChoiceOnChangeHandler> bugParamDefinition;
-    OctaneDefaultBugParams(Producer<? extends BugParam> producer, IOctaneBugParamChoiceOnChangeHandler onChangeHandler) {
-    	this.bugParamDefinition = new BugParamDefinition<>(producer, onChangeHandler);
+    OctaneDefaultBugParamDefinition(Producer<? extends BugParam> producer, IOctaneBugParamChoiceOnChangeHandler onChangeHandler) {
+    	this.bugParamDefinition = new BugParamDefinition<>(name(),producer, onChangeHandler);
     }
     @Override
-    public BugParamDefinition<IOctaneBugParamChoiceOnChangeHandler> getBugParamDefinition() {
+    public BugParamDefinition<IOctaneBugParamChoiceOnChangeHandler> definition() {
     	return bugParamDefinition;
     }
     
     static final void updateRootParam(OctaneApiClient client, List<BugParam> bugParams) {
-		BugParam rootParam = OctaneDefaultBugParams.ROOT.getCurrentBugParam(bugParams);
+		BugParam rootParam = OctaneDefaultBugParamDefinition.ROOT.definition().getCurrentBugParam(bugParams);
 		rootParam.setRequired(true);
 		updateChoiceList(rootParam, client.getWorkItemRootNames());
 		updateEpicParam(client, bugParams);
 	}
 	
 	static final void updateEpicParam(OctaneApiClient client, List<BugParam> bugParams) {
-		String rootName = OctaneDefaultBugParams.ROOT.getCurrentBugParam(bugParams).getValue();
-		BugParam epicParam = OctaneDefaultBugParams.EPIC.getCurrentBugParam(bugParams);
+		String rootName = OctaneDefaultBugParamDefinition.ROOT.definition().getCurrentBugParam(bugParams).getValue();
+		BugParam epicParam = OctaneDefaultBugParamDefinition.EPIC.definition().getCurrentBugParam(bugParams);
 		updateChoiceList(epicParam, client.getEpicNames(rootName));
 		updateFeatureParam(client, bugParams);
 	}
 	
 	static final void updateFeatureParam(OctaneApiClient client, List<BugParam> bugParams) {
-		String rootName = OctaneDefaultBugParams.ROOT.getCurrentBugParam(bugParams).getValue();
-		String epicName = OctaneDefaultBugParams.EPIC.getCurrentBugParam(bugParams).getValue();
-		BugParam featureParam = OctaneDefaultBugParams.FEATURE.getCurrentBugParam(bugParams);
+		String rootName = OctaneDefaultBugParamDefinition.ROOT.definition().getCurrentBugParam(bugParams).getValue();
+		String epicName = OctaneDefaultBugParamDefinition.EPIC.definition().getCurrentBugParam(bugParams).getValue();
+		BugParam featureParam = OctaneDefaultBugParamDefinition.FEATURE.definition().getCurrentBugParam(bugParams);
 		updateChoiceList(featureParam, client.getFeatureNames(rootName, epicName));
 		featureParam.setRequired(StringUtils.isNotBlank(epicName));
 	}

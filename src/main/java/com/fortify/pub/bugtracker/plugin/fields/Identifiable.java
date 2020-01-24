@@ -25,29 +25,27 @@
 package com.fortify.pub.bugtracker.plugin.fields;
 
 /**
- * This interface extends {@link IDefaultMethodsBugParamDefinition} to allow access to
- * all of the default methods provided by that interface. In addition, this interface
- * provides a default implementation for the {@link #getIdentifier()} method based on
- * the {@link #name()} method provided by enumerations.
+ * Simple class that provides a {@link #getIdentifier()} method,
+ * returning the configured identifier.
  * 
  * @author Ruud Senden
  *
- * @param <OnChangeHandler>
  */
-public interface IDefaultMethodsBugParamDefinitionEnum<OnChangeHandler> extends IDefaultMethodsBugParamDefinition<OnChangeHandler> {
-	/**
-	 * Implementation for this method is (usually) automatically provided by enumeration entries.
-	 * @return
-	 */
-	public String name();
+public class Identifiable {
+	private final String identifier;
 	
 	/**
-	 * Default implementation for the {@link #IIdentifier.getIdentifier()} method, based on the
-	 * value returned by the {@link #name()} method.
+	 * Constructor for configuring the identifier
+	 * @param identifier
 	 */
-	@Override
-	default String getIdentifier() {
-		return String.format("enum.%s", name());
+	public Identifiable(String identifier) {
+		this.identifier = identifier;
 	}
 
+	/**
+	 * @return an identifier
+	 */
+	public final String getIdentifier() {
+		return identifier;
+	}
 }

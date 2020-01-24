@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.pub.bugtracker.plugin.alm.octane.bugparam;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -35,20 +34,18 @@ import javax.json.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClient;
+import com.fortify.pub.bugtracker.plugin.fields.IBugParamDefinitionProvider;
 import com.fortify.pub.bugtracker.support.BugParam;
 
 public class OctaneBugParamHelper {
 	public final List<BugParam> getBugParameters(OctaneApiClient client) {
-		List<BugParam> bugParams = new ArrayList<>(OctaneDefaultBugParams.values().length);
-		for ( OctaneDefaultBugParams field : OctaneDefaultBugParams.values() ) {
-			bugParams.add(field.createBugParam());
-		}
-		OctaneDefaultBugParams.updateRootParam(client, bugParams);
-        return bugParams;
+		List<BugParam> bugParams = IBugParamDefinitionProvider.getBugParams(OctaneDefaultBugParamDefinition.values());
+		OctaneDefaultBugParamDefinition.updateRootParam(client, bugParams);
+		return bugParams;
 	}
 
 	public List<BugParam> onParameterChange(OctaneApiClient client, String changedParamIdentifier, List<BugParam> currentValues) {
-		OctaneDefaultBugParams.valueOf(changedParamIdentifier).getOnChangeHandler().onChange(client, currentValues);
+		OctaneDefaultBugParamDefinition.valueOf(changedParamIdentifier).definition().getOnChangeHandler().onChange(client, currentValues);
 		return currentValues;
 	}
 
@@ -56,8 +53,8 @@ public class OctaneBugParamHelper {
 		return Json.createObjectBuilder()
 				.add("parent", getParent(client, params))
 				.add("phase", getPhase(client, params))
-				.add("name", OctaneDefaultBugParams.NAME.getValue(params))
-				.add("description", OctaneDefaultBugParams.DESCRIPTION.getValue(params))
+				.add("name", OctaneDefaultBugParamDefinition.NAME.definition().getValue(params))
+				.add("description", OctaneDefaultBugParamDefinition.DESCRIPTION.definition().getValue(params))
 				.build();
 	}
 
@@ -69,9 +66,9 @@ public class OctaneBugParamHelper {
 	}
 
 	private JsonValue getParent(OctaneApiClient client, Map<String, String> params) {
-		String rootName = OctaneDefaultBugParams.ROOT.getValue(params);
-		String epicName = OctaneDefaultBugParams.EPIC.getValue(params);
-		String featureName = OctaneDefaultBugParams.FEATURE.getValue(params);
+		String rootName = OctaneDefaultBugParamDefinition.ROOT.definition().getValue(params);
+		String epicName = OctaneDefaultBugParamDefinition.EPIC.definition().getValue(params);
+		String featureName = OctaneDefaultBugParamDefinition.FEATURE.definition().getValue(params);
 		if ( StringUtils.isNotBlank(featureName) ) {
 			return getParent("feature", client.getFeatureId(rootName, epicName, featureName));
 		} else if ( StringUtils.isNotBlank(epicName) ) {

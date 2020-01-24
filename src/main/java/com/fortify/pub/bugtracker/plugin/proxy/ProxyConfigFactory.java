@@ -29,10 +29,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
-import org.glassfish.jersey.internal.util.Producer;
 
-import com.fortify.pub.bugtracker.plugin.fields.IDefaultMethodsBugTrackerConfigDefinition;
-import com.fortify.pub.bugtracker.plugin.fields.IDefaultMethodsBugTrackerConfigDefinitionEnum;
+import com.fortify.pub.bugtracker.plugin.fields.BugTrackerConfigDefinition;
+import com.fortify.pub.bugtracker.plugin.fields.IBugTrackerConfigDefinitionProvider;
 import com.fortify.pub.bugtracker.support.BugTrackerConfig;
 
 /**
@@ -44,7 +43,7 @@ import com.fortify.pub.bugtracker.support.BugTrackerConfig;
  *      to regular {@link BugTrackerConfig} instances, these fields are not displayed
  *      by SSC as part of the bug tracker configuration, but rather are used to instruct 
  *      SSC to pass the global SSC proxy configuration into our plugin configuration.</li>
- *  <li>The {@link #addBugTrackerConfigFields(List)} can be called to add all 
+ *  <li>The {@link #addBugTrackerConfigs(List)} can be called to add all 
  *      {@link BugTrackerConfig} instances to the given {@link List}.</li>
  *  <li>The various getter methods can be used to get {@link ProxyConfig} instances
  *      based on the given bug tracker configuration {@link Map}.</li> 
@@ -58,7 +57,7 @@ public class ProxyConfigFactory {
 	/**
 	 * Define the various SSC proxy configuration fields.
 	 */
-	private static enum SscProxyBugTrackerConfigDefinition implements IDefaultMethodsBugTrackerConfigDefinitionEnum {
+	private static enum SscProxyBugTrackerConfigDefinition implements IBugTrackerConfigDefinitionProvider {
         HTTP_PROXY_HOST("httpProxyHost", "HTTP Proxy Host"),
         HTTP_PROXY_PORT("httpProxyPort", "HTTP Proxy Port"),
         HTTP_PROXY_USERNAME("httpProxyUsername", "HTTP Proxy Username"),
@@ -68,14 +67,14 @@ public class ProxyConfigFactory {
         HTTPS_PROXY_USERNAME("httpsProxyUsername", "HTTPS Proxy Username"),
         HTTPS_PROXY_PASSWORD("httpsProxyPassword", "HTTPS Proxy Password");
 
-        private final Producer<BugTrackerConfig> bugTrackerConfigProducer;
+        private final BugTrackerConfigDefinition bugTrackerConfigDefinition;
         SscProxyBugTrackerConfigDefinition(final String id, final String displayLabel) {
-        	this.bugTrackerConfigProducer = ()->
-        		new BugTrackerConfig().setIdentifier(id).setDisplayLabel(displayLabel);
+        	this.bugTrackerConfigDefinition = new BugTrackerConfigDefinition(id, ()->
+        		new BugTrackerConfig().setIdentifier(id).setDisplayLabel(displayLabel));
         }
         @Override
-        public Producer<BugTrackerConfig> getBugTrackerConfigProducer() {
-        	return bugTrackerConfigProducer;
+        public BugTrackerConfigDefinition definition() {
+        	return bugTrackerConfigDefinition;
         }
     }
 	
@@ -85,8 +84,8 @@ public class ProxyConfigFactory {
 	 * 
 	 * @param list
 	 */
-	public static final void addBugTrackerConfigFields(List<BugTrackerConfig> list) {
-		IDefaultMethodsBugTrackerConfigDefinition.addFields(list, SscProxyBugTrackerConfigDefinition.values());
+	public static final void addBugTrackerConfigs(List<BugTrackerConfig> list) {
+		IBugTrackerConfigDefinitionProvider.addBugTrackerConfigs(list, SscProxyBugTrackerConfigDefinition.values());
 	}
 
 	/**
@@ -147,11 +146,11 @@ public class ProxyConfigFactory {
 			SscProxyBugTrackerConfigDefinition hostField, SscProxyBugTrackerConfigDefinition portField, 
 			SscProxyBugTrackerConfigDefinition usernameField, SscProxyBugTrackerConfigDefinition passwordField) {
 		ProxyConfig result = null;
-		String host = hostField.getValue(config);
-		Integer port = portField.getIntValue(config);
+		String host = hostField.definition().getValue(config);
+		Integer port = portField.definition().getIntValue(config);
 		if ( StringUtils.isNotBlank(host) && port!=null ) {
-			String userName = usernameField.getValue(config);
-			String password = passwordField.getValue(config);
+			String userName = usernameField.definition().getValue(config);
+			String password = passwordField.definition().getValue(config);
 			result = new ProxyConfig(host, port, userName, password);
 		}
 		return result;

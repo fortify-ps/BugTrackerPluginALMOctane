@@ -24,28 +24,44 @@
  ******************************************************************************/
 package com.fortify.pub.bugtracker.plugin.fields;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fortify.pub.bugtracker.support.BugTrackerConfig;
+
 /**
- * This interface extends {@link IDefaultMethodsBugTrackerConfigDefinition} to allow 
- * access to all of the default methods provided by that interface. In addition, this 
- * interface provides a default implementation for the {@link #getIdentifier()} method 
- * based on the {@link #name()} method provided by enumerations.
+ * This interface provides access to a {@link BugTrackerConfigDefinition} instance
+ * through the {@link #definition()} method.
  * 
  * @author Ruud Senden
  */
-public interface IDefaultMethodsBugTrackerConfigDefinitionEnum extends IDefaultMethodsBugTrackerConfigDefinition {
-	/**
-	 * Implementation for this method is (usually) automatically provided by enumeration entries.
-	 * @return
-	 */
-	public String name(); // Implemented by enum values
+public interface IBugTrackerConfigDefinitionProvider {
+	public BugTrackerConfigDefinition definition();
 	
 	/**
-	 * Default implementation for the {@link #IIdentifier.getIdentifier()} method, based on the
-	 * value returned by the {@link #name()} method.
+	 * Static method for adding a {@link BugTrackerConfig} instance as produced
+	 * by each given {@link IBugTrackerConfigDefinitionProvider} to the given 
+	 * {@link BugTrackerConfig} {@link List}.
+	 * 
+	 * @param list
+	 * @param providers
 	 */
-	@Override
-	default String getIdentifier() {
-		return String.format("enum.%s", name());
+	public static void addBugTrackerConfigs(List<BugTrackerConfig> list, IBugTrackerConfigDefinitionProvider[] providers) {
+		for ( IBugTrackerConfigDefinitionProvider provider : providers ) { 
+			list.add(provider.definition().createBugTrackerConfig()); 
+		}
 	}
-
+	
+	/**
+	 * Static method for retrieving a {@link List} of {@link BugTrackerConfig} instances 
+	 * as produced by each given {@link IBugTrackerConfigDefinitionProvider}.
+	 * 
+	 * @param list
+	 * @param providers
+	 */
+	public static List<BugTrackerConfig> getBugTrackerConfigs(IBugTrackerConfigDefinitionProvider[] providers) {
+		List<BugTrackerConfig> result = new ArrayList<>(providers.length);
+		addBugTrackerConfigs(result, providers);
+		return result;
+	}
 }

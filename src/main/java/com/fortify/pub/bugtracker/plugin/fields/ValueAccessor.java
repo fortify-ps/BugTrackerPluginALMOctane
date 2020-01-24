@@ -32,20 +32,29 @@ import org.apache.commons.lang.StringUtils;
 
 /**
  * Based on the identifier returned by the {@link #getIdentifier()} method,
- * this interface provides various default methods for retrieving a corresponding
- * value for that identifier from a given {@link Map}.
+ * this class provides various methods for retrieving a corresponding
+ * value for that identifier from a given values {@link Map}.
  * 
  * @author Ruud Senden
  *
  */
-public interface IDefaultMethodsGetIdentifierValue extends IIdentifier {
+public class ValueAccessor extends Identifiable {
+	
+	/**
+	 * Constructor to configure the identifier
+	 * @param identifier
+	 */
+	public ValueAccessor(String identifier) {
+		super(identifier);
+	}
+
 	/**
 	 * Get the value for the identifier returned by {@link #getIdentifier()}
 	 * from the given {@link Map}
 	 * @param values
 	 * @return
 	 */
-	public default String getValue(Map<String, String> values) {
+	public final String getValue(Map<String, String> values) {
 		return values.get(getIdentifier());
 	}
 	
@@ -56,7 +65,7 @@ public interface IDefaultMethodsGetIdentifierValue extends IIdentifier {
 	 * @param values
 	 * @return
 	 */
-	public default String getNormalizedValue(Map<String, String> values) {
+	public final String getNormalizedValue(Map<String, String> values) {
 		String value = getValue(values);
         return StringUtils.isBlank(value) ? null : value.trim();
 	}
@@ -67,7 +76,7 @@ public interface IDefaultMethodsGetIdentifierValue extends IIdentifier {
 	 * @param values
 	 * @return
 	 */
-	public default Integer getIntValue(Map<String, String> values) {
+	public final Integer getIntValue(Map<String, String> values) {
 		String value = getNormalizedValue(values);
 		return value==null ? null : new Integer(value);
 	}
@@ -78,7 +87,7 @@ public interface IDefaultMethodsGetIdentifierValue extends IIdentifier {
 	 * @param values
 	 * @return
 	 */
-	public default URL getNormalizedURLValue(Map<String, String> values) {
+	public final URL getNormalizedURLValue(Map<String, String> values) {
 		String value = getNormalizedValue(values);
 		if ( value == null ) {
 			return null;

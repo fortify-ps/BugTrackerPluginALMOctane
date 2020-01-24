@@ -27,8 +27,11 @@ package com.fortify.pub.bugtracker.plugin.alm.octane;
 import java.util.List;
 import java.util.Map;
 
+import org.glassfish.jersey.internal.util.Producer;
+
 import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneConfig;
-import com.fortify.pub.bugtracker.plugin.config.IBugTrackerConfigField;
+import com.fortify.pub.bugtracker.plugin.fields.IDefaultMethodsBugTrackerConfigDefinition;
+import com.fortify.pub.bugtracker.plugin.fields.IDefaultMethodsBugTrackerConfigDefinitionEnum;
 import com.fortify.pub.bugtracker.support.BugTrackerConfig;
 
 /**
@@ -40,36 +43,37 @@ import com.fortify.pub.bugtracker.support.BugTrackerConfig;
  *      id.</li>
  *  <li>The {@link #addBugTrackerConfigFields(List)} can be called to add all 
  *      {@link BugTrackerConfig} instances to the given {@link List}.</li>
- *  <li>The {@link #getOctaneConfig(Map)} method can be used to get an {@link OctaneConfig} 
+ *  <li>The {@link #createOctaneConfig(Map)} method can be used to get an {@link OctaneConfig} 
  *      instance based on the given bug tracker configuration {@link Map}.</li> 
  * </ul>
  *  
  * @author Ruud Senden
  *
  */
-public class BugTrackerOctaneConfigFactory {
+public class OctaneConfigFactory {
 	
 	/**
 	 * Define the various ALM Octane configuration fields.
 	 */
-    private static enum OctaneConfigField implements IBugTrackerConfigField {
+    private static enum OctaneConfigField implements IDefaultMethodsBugTrackerConfigDefinitionEnum {
     	URL("url", "ALM Octane URL", "Server at which ALM Octane REST API is accessible. Example: http://w2k3r2sp2:8080", true),
     	SHARED_SPACE_ID("sharedspaceId", "Shared Space ID", "ID of shared space. Either numeric or a UUID.", true),
         WORKSPACE_ID("workspaceId", "Workspace ID", "ID of workspace. Numeric.", true)
         ;
 
-        private final BugTrackerConfig bugTrackerConfig;
+        private final Producer<BugTrackerConfig> bugTrackerConfigProducer;
         OctaneConfigField(final String id, final String displayLabel, final String description, boolean required) {
-        	this.bugTrackerConfig = new BugTrackerConfig()
+        	this.bugTrackerConfigProducer = ()->new BugTrackerConfig()
         			.setIdentifier(id)
         			.setDisplayLabel(displayLabel)
         			.setDescription(description)
         			.setRequired(required);
         }
         @Override
-		public BugTrackerConfig getBugTrackerConfig() {
-        	return this.bugTrackerConfig;
-        }
+		public Producer<BugTrackerConfig> getBugTrackerConfigProducer() {
+			return bugTrackerConfigProducer;
+		}
+        
     }
 	
     /**
@@ -79,7 +83,7 @@ public class BugTrackerOctaneConfigFactory {
 	 * @param list
 	 */
     public static final void addBugTrackerConfigFields(List<BugTrackerConfig> list) {
-		IBugTrackerConfigField.addFields(list, OctaneConfigField.values());
+		IDefaultMethodsBugTrackerConfigDefinition.addFields(list, OctaneConfigField.values());
 	}
 
     /**
@@ -89,9 +93,9 @@ public class BugTrackerOctaneConfigFactory {
 	 * @param bugTrackerConfig
 	 * @return
 	 */
-	public static final OctaneConfig getOctaneConfig(Map<String, String> bugTrackerConfig) {
+	public static final OctaneConfig createOctaneConfig(Map<String, String> bugTrackerConfig) {
 		return new OctaneConfig(
-				OctaneConfigField.URL.getURLValue(bugTrackerConfig),
+				OctaneConfigField.URL.getNormalizedURLValue(bugTrackerConfig),
 				OctaneConfigField.SHARED_SPACE_ID.getValue(bugTrackerConfig),
 				OctaneConfigField.WORKSPACE_ID.getValue(bugTrackerConfig));
 	}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2017 EntIT Software LLC, a Micro Focus company
+ * (c) Copyright 2017 EntIT Software LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,11 +22,30 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
+package com.fortify.pub.bugtracker.plugin.fields;
+
 /**
- * This package contains generic functionality related to {@link com.fortify.pub.bugtracker.support.BugTrackerConfig}
- * instances.
+ * This interface extends {@link IDefaultMethodsBugTrackerConfigDefinition} to allow 
+ * access to all of the default methods provided by that interface. In addition, this 
+ * interface provides a default implementation for the {@link #getIdentifier()} method 
+ * based on the {@link #name()} method provided by enumerations.
  * 
  * @author Ruud Senden
- *
  */
-package com.fortify.pub.bugtracker.plugin.config;
+public interface IDefaultMethodsBugTrackerConfigDefinitionEnum extends IDefaultMethodsBugTrackerConfigDefinition {
+	/**
+	 * Implementation for this method is (usually) automatically provided by enumeration entries.
+	 * @return
+	 */
+	public String name(); // Implemented by enum values
+	
+	/**
+	 * Default implementation for the {@link #IIdentifier.getIdentifier()} method, based on the
+	 * value returned by the {@link #name()} method.
+	 */
+	@Override
+	default String getIdentifier() {
+		return String.format("enum.%s", name());
+	}
+
+}

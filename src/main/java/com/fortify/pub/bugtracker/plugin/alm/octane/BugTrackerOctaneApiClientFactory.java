@@ -30,19 +30,19 @@ import java.util.Map;
 import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClient;
 import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneConfig;
 import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneHttpClient;
-import com.fortify.pub.bugtracker.plugin.proxy.BugTrackerProxyConfigFactory;
+import com.fortify.pub.bugtracker.plugin.proxy.ProxyConfigFactory;
 import com.fortify.pub.bugtracker.plugin.proxy.ProxyConfig;
 import com.fortify.pub.bugtracker.support.BugTrackerConfig;
 import com.fortify.pub.bugtracker.support.UserAuthenticationStore;
 
 /**
- * This class combines functionality provided by {@link BugTrackerOctaneConfigFactory}
- * and {@link BugTrackerProxyConfigFactory} to provide the following functionality:
+ * This class combines functionality provided by {@link OctaneConfigFactory}
+ * and {@link ProxyConfigFactory} to provide the following functionality:
  * 
  * <ul>
  *  <li>The {@link #addBugTrackerConfigFields(List)} method can be called to add all 
- *      {@link BugTrackerConfig} instances from both {@link BugTrackerOctaneConfigFactory}
- *      and {@link BugTrackerProxyConfigFactory} to the given list.</li>
+ *      {@link BugTrackerConfig} instances from both {@link OctaneConfigFactory}
+ *      and {@link ProxyConfigFactory} to the given list.</li>
  *  <li>Based on the bug tracker configuration {@link Map} passed in the constructor,
  *      an instance of this class provides access to the corresponding {@link OctaneConfig}
  *      and {@link ProxyConfig}.</li>
@@ -56,13 +56,13 @@ import com.fortify.pub.bugtracker.support.UserAuthenticationStore;
  */
 public class BugTrackerOctaneApiClientFactory {
 	/**
-	 * Add {@link BugTrackerConfig} instances from both {@link BugTrackerOctaneConfigFactory}
-	 * and {@link BugTrackerProxyConfigFactory} to the given {@link BugTrackerConfig} {@link List}.
+	 * Add {@link BugTrackerConfig} instances from both {@link OctaneConfigFactory}
+	 * and {@link ProxyConfigFactory} to the given {@link BugTrackerConfig} {@link List}.
 	 * @param list
 	 */
     public static final void addBugTrackerConfigFields(List<BugTrackerConfig> list) {
-		BugTrackerOctaneConfigFactory.addBugTrackerConfigFields(list);
-		BugTrackerProxyConfigFactory.addBugTrackerConfigFields(list);
+		OctaneConfigFactory.addBugTrackerConfigFields(list);
+		ProxyConfigFactory.addBugTrackerConfigFields(list);
 	}
 
     private final OctaneConfig octaneConfig;
@@ -74,8 +74,8 @@ public class BugTrackerOctaneApiClientFactory {
      * @param bugTrackerConfig
      */
     public BugTrackerOctaneApiClientFactory(Map<String, String> bugTrackerConfig) {
-		this.octaneConfig = BugTrackerOctaneConfigFactory.getOctaneConfig(bugTrackerConfig);
-		this.proxyConfig = BugTrackerProxyConfigFactory.getProxyConfig(bugTrackerConfig, this.getOctaneConfig().getBaseUrl());
+		this.octaneConfig = OctaneConfigFactory.createOctaneConfig(bugTrackerConfig);
+		this.proxyConfig = ProxyConfigFactory.createProxyConfig(bugTrackerConfig, this.getOctaneConfig().getBaseUrl());
 	}
 
 	/**

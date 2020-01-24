@@ -34,6 +34,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.fortify.pub.bugtracker.plugin.AbstractBatchBugTrackerPlugin;
 import com.fortify.pub.bugtracker.plugin.BugTrackerPluginImplementation;
+import com.fortify.pub.bugtracker.plugin.alm.octane.bugparam.OctaneBugParamHelper;
 import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClient;
 import com.fortify.pub.bugtracker.support.Bug;
 import com.fortify.pub.bugtracker.support.BugParam;
@@ -84,7 +85,6 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     public List<BugTrackerConfig> getConfiguration() {
         List<BugTrackerConfig> result = new ArrayList<>();
         BugTrackerOctaneApiClientFactory.addBugTrackerConfigFields(result);
-        OctaneBugParamHelper.addBugTrackerConfigFields(result);
         pluginHelper.populateWithDefaultsIfAvailable(result);
         return result;
     }
@@ -92,7 +92,7 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     @Override
     public void setConfiguration(Map<String, String> config) {
         this.octaneApiClientFactory = new BugTrackerOctaneApiClientFactory(config);
-        this.octaneBugParamHelper = new OctaneBugParamHelper(config);
+        this.octaneBugParamHelper = new OctaneBugParamHelper();
     }
     
     @Override

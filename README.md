@@ -25,8 +25,8 @@ configuration under SSC Administration->Templates->Bug Filing:
 * Bug Tracker Plugin: ALM Octane
 * Description: Templates for ALM Octane text fields
 * Mapped Fields:
-    * Description: For now, copy from the Description field for the JIRA template
-    * Name: For now, copy from the Summary field for the JIRA template
+    * `Description`: For now, copy from the `Description` field for the `Templates for Azure DevOps / TFS text fields` template
+    * `Name`: For now, copy from the `Title` field for the `Templates for Azure DevOps / TFS text fields` template
     
 ![Screenshot](https://github.com/fortify-ps/BugTrackerPluginALMOctane/raw/master/SSC-templatesbugfields.png "Screenshot")
 

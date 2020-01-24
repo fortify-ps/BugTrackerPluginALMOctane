@@ -12,6 +12,8 @@ from Fortify SSC to ALM Octane.
 To build this project, run `gradlew clean build`. This will generate the plugin jar in the `build`
 directory; this plugin jar can be uploaded to SSC under SSC Administration->Plugins->Bug Tracking.
 
+If you get a vague error message during the build like `Could not get unknown property 'classesDir' for main classes of type org.gradle.api.internal.tasks.DefaultSourceSetOutput.`, please make sure that you are using the Gradle Wrapper and not Gradle 5.x/6.x/...
+
 The project includes a number of JUnit tests. Some of these tests may run as-is, other tests may require
 a connection to ALM Octane. These tests will be skipped if no connection to ALM Octane has been configured.
 The ALM Octane connection can be configured by passing the following property definitions when running

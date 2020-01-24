@@ -97,9 +97,6 @@ enum OctaneDefaultBugParamDefinition implements IBugParamDefinitionProvider<IOct
 		rootParam.setRequired(true);
 		List<String> rootChoiceList = client.getWorkItemRootNames();
 		updateChoiceList(rootParam, rootChoiceList);
-		if ( rootChoiceList!=null && rootChoiceList.size()==1 ) {
-			rootParam.setValue(rootChoiceList.get(0));
-		}
 		updateEpicParam(client, bugParams);
 	}
 	
@@ -121,5 +118,8 @@ enum OctaneDefaultBugParamDefinition implements IBugParamDefinitionProvider<IOct
 	static private final void updateChoiceList(BugParam bugParam, List<String> choiceList) {
 		Validate.isInstanceOf(BugParamChoice.class, bugParam, "Cannot update choice list for bug paramater type "+bugParam.getClass().getName());
 		((BugParamChoice)bugParam).setChoiceList(choiceList);
+		if ( choiceList!=null && choiceList.size()==1 ) {
+			bugParam.setValue(choiceList.get(0));
+		}
 	}
 }

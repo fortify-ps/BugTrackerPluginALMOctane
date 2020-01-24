@@ -71,6 +71,17 @@ public class ValueAccessor extends Identifiable {
 	}
 	
 	/**
+	 * Same as {@link #getNormalizedValue(Map)}, but with the return value
+	 * abbreviated to the given maximum width if necessary.
+	 * @param values
+	 * @param maxWidth
+	 * @return
+	 */
+	public final String getNormalizedValue(Map<String, String> values, int maxWidth) {
+		return StringUtils.abbreviate(getNormalizedValue(values), maxWidth);
+	}
+	
+	/**
 	 * Convert the normalized value (see {@link #getNormalizedValue(Map)} to
 	 * an {@link Integer}.
 	 * @param values

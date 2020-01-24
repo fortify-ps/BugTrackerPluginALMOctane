@@ -53,8 +53,8 @@ public class OctaneBugParamHelper {
 		return Json.createObjectBuilder()
 				.add("parent", getParent(client, params))
 				.add("phase", getPhase(client, params))
-				.add("name", OctaneDefaultBugParamDefinition.NAME.definition().getValue(params))
-				.add("description", OctaneDefaultBugParamDefinition.DESCRIPTION.definition().getValue(params))
+				.add("name", OctaneDefaultBugParamDefinition.NAME.definition().getNormalizedValue(params, 254))
+				.add("description", OctaneDefaultBugParamDefinition.DESCRIPTION.definition().getNormalizedValue(params))
 				.build();
 	}
 
@@ -66,9 +66,9 @@ public class OctaneBugParamHelper {
 	}
 
 	private JsonValue getParent(OctaneApiClient client, Map<String, String> params) {
-		String rootName = OctaneDefaultBugParamDefinition.ROOT.definition().getValue(params);
-		String epicName = OctaneDefaultBugParamDefinition.EPIC.definition().getValue(params);
-		String featureName = OctaneDefaultBugParamDefinition.FEATURE.definition().getValue(params);
+		String rootName = OctaneDefaultBugParamDefinition.ROOT.definition().getNormalizedValue(params);
+		String epicName = OctaneDefaultBugParamDefinition.EPIC.definition().getNormalizedValue(params);
+		String featureName = OctaneDefaultBugParamDefinition.FEATURE.definition().getNormalizedValue(params);
 		if ( StringUtils.isNotBlank(featureName) ) {
 			return getParent("feature", client.getFeatureId(rootName, epicName, featureName));
 		} else if ( StringUtils.isNotBlank(epicName) ) {

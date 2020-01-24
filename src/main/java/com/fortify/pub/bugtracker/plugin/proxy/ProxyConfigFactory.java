@@ -146,11 +146,11 @@ public class ProxyConfigFactory {
 			SscProxyBugTrackerConfigDefinition hostField, SscProxyBugTrackerConfigDefinition portField, 
 			SscProxyBugTrackerConfigDefinition usernameField, SscProxyBugTrackerConfigDefinition passwordField) {
 		ProxyConfig result = null;
-		String host = hostField.definition().getValue(config);
+		String host = hostField.definition().getNormalizedValue(config);
 		Integer port = portField.definition().getIntValue(config);
 		if ( StringUtils.isNotBlank(host) && port!=null ) {
-			String userName = usernameField.definition().getValue(config);
-			String password = passwordField.definition().getValue(config);
+			String userName = usernameField.definition().getNormalizedValue(config);
+			String password = passwordField.definition().getNormalizedValue(config);
 			result = new ProxyConfig(host, port, userName, password);
 		}
 		return result;

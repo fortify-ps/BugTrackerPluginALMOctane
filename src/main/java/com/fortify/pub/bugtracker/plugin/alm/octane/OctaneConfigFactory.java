@@ -93,7 +93,7 @@ public class OctaneConfigFactory {
 	public static final OctaneConfig createOctaneConfig(Map<String, String> bugTrackerConfig) {
 		return new OctaneConfig(
 				OctaneConfigField.URL.definition().getNormalizedURLValue(bugTrackerConfig),
-				OctaneConfigField.SHARED_SPACE_ID.definition().getValue(bugTrackerConfig),
-				OctaneConfigField.WORKSPACE_ID.definition().getValue(bugTrackerConfig));
+				OctaneConfigField.SHARED_SPACE_ID.definition().getNormalizedValue(bugTrackerConfig),
+				OctaneConfigField.WORKSPACE_ID.definition().getNormalizedValue(bugTrackerConfig));
 	}
 }

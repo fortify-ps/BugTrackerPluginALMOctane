@@ -10,6 +10,7 @@ Some (potential) to-do's before an initial release:
 * Further testing
 * Further code improvements 
 * Further documentation improvements
+* Change logging statements to correct (DEBUG/INFO) level
 
 
 ## Building & installing the plugin

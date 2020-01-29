@@ -33,6 +33,7 @@ import javax.json.JsonValue;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fortify.pub.bugtracker.plugin.alm.octane.client.JsonHelper;
 import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClient;
 import com.fortify.pub.bugtracker.plugin.fields.IBugParamDefinitionProvider;
 import com.fortify.pub.bugtracker.support.BugParam;
@@ -52,17 +53,10 @@ public class OctaneBugParamHelper {
 	public JsonObject getBugContents(OctaneApiClient client, Map<String, String> params) {
 		return Json.createObjectBuilder()
 				.add("parent", getParent(client, params))
-				.add("phase", getPhase(client, params))
+				.add("phase", JsonHelper.getReferenceObjectForPhaseId("phase.defect.new"))
 				.add("name", OctaneDefaultBugParamDefinition.NAME.definition().getNormalizedValue(params, 254))
 				.add("description", OctaneDefaultBugParamDefinition.DESCRIPTION.definition().getNormalizedValue(params))
 				.build();
-	}
-
-	private JsonValue getPhase(OctaneApiClient client, Map<String, String> params) {
-		return Json.createObjectBuilder()
-			.add("type", "phase")
-			.add("id", "phase.defect.new")
-			.build();
 	}
 
 	private JsonValue getParent(OctaneApiClient client, Map<String, String> params) {
@@ -70,20 +64,19 @@ public class OctaneBugParamHelper {
 		String epicName = OctaneDefaultBugParamDefinition.EPIC.definition().getNormalizedValue(params);
 		String featureName = OctaneDefaultBugParamDefinition.FEATURE.definition().getNormalizedValue(params);
 		if ( StringUtils.isNotBlank(featureName) ) {
-			return getParent("feature", client.getFeatureId(rootName, epicName, featureName));
-		} else if ( StringUtils.isNotBlank(epicName) ) {
-			return getParent("epic", client.getEpicId(rootName, epicName));
+			return getReferenceObjectForFeatureName(client, rootName, epicName, featureName);
 		} else if ( StringUtils.isNotBlank(rootName) ) {
-			return getParent("work_item_root", client.getWorkItemRootId(rootName));
+			return getReferenceObjectForWorkItemRootName(client, rootName);
 		} else {
 			throw new IllegalArgumentException("No parent defined for defect");
 		}
 	}
 
-	private JsonValue getParent(String type, String id) {
-		return Json.createObjectBuilder()
-				.add("type", type)
-				.add("id", id)
-				.build();
+	private JsonValue getReferenceObjectForWorkItemRootName(OctaneApiClient client, String rootName) {
+		return JsonHelper.getReferenceObjectForWorkItemRootId(client.getIdForWorkItemRootName(rootName));
+	}
+
+	private JsonValue getReferenceObjectForFeatureName(OctaneApiClient client, String rootName, String epicName, String featureName) {
+		return JsonHelper.getReferenceObjectForFeatureId(client.getIdForFeatureName(rootName, epicName, featureName));
 	}
 }

@@ -35,7 +35,9 @@ import org.apache.commons.logging.LogFactory;
 import com.fortify.pub.bugtracker.plugin.AbstractBatchBugTrackerPlugin;
 import com.fortify.pub.bugtracker.plugin.BugTrackerPluginImplementation;
 import com.fortify.pub.bugtracker.plugin.alm.octane.bugparam.OctaneBugParamHelper;
+import com.fortify.pub.bugtracker.plugin.alm.octane.bugstate.OctaneBugStateHelper;
 import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClient;
+import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClientFactory;
 import com.fortify.pub.bugtracker.support.Bug;
 import com.fortify.pub.bugtracker.support.BugParam;
 import com.fortify.pub.bugtracker.support.BugSubmission;
@@ -51,8 +53,9 @@ import com.fortify.pub.bugtracker.support.UserAuthenticationStore;
 public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     private static final Log LOG = LogFactory.getLog(OctaneBugTrackerPlugin.class);
 
-    private BugTrackerOctaneApiClientFactory octaneApiClientFactory;
-    private OctaneBugParamHelper octaneBugParamHelper;
+    private OctaneApiClientFactory octaneApiClientFactory;
+    private final OctaneBugParamHelper octaneBugParamHelper = new OctaneBugParamHelper();
+    private final OctaneBugStateHelper octaneBugStateHelper = new OctaneBugStateHelper();
 
     public OctaneBugTrackerPlugin() {}
     
@@ -84,15 +87,14 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     @Override
     public List<BugTrackerConfig> getConfiguration() {
         List<BugTrackerConfig> result = new ArrayList<>();
-        BugTrackerOctaneApiClientFactory.addBugTrackerConfigFields(result);
+        OctaneApiClientFactory.addBugTrackerConfigFields(result);
         pluginHelper.populateWithDefaultsIfAvailable(result);
         return result;
     }
     
     @Override
     public void setConfiguration(Map<String, String> config) {
-        this.octaneApiClientFactory = new BugTrackerOctaneApiClientFactory(config);
-        this.octaneBugParamHelper = new OctaneBugParamHelper();
+        this.octaneApiClientFactory = new OctaneApiClientFactory(config);
     }
     
     @Override
@@ -108,13 +110,13 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     }
     
     private final void validateOctaneConnection(final UserAuthenticationStore authStore) {
-    	try (OctaneApiClient client = getOctaneRestApi(authStore)) {
+    	try (OctaneApiClient client = createOctaneApiClient(authStore)) {
             client.validateConnection();
         }
     }
     
-    private final OctaneApiClient getOctaneRestApi(final UserAuthenticationStore authStore) {
-		return octaneApiClientFactory.getOctaneRestApi(authStore);
+    private final OctaneApiClient createOctaneApiClient(final UserAuthenticationStore authStore) {
+		return octaneApiClientFactory.createOctaneApiClient(authStore);
 	}
     
     
@@ -134,7 +136,7 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     }
 
 	private List<BugParam> getBugParameters(UserAuthenticationStore authStore) {
-		try (OctaneApiClient client = getOctaneRestApi(authStore)) {
+		try (OctaneApiClient client = createOctaneApiClient(authStore)) {
         	return octaneBugParamHelper.getBugParameters(client);
         }
 	}
@@ -152,7 +154,7 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     }
 
 	private List<BugParam> onParameterChange(String changedParamIdentifier, List<BugParam> currentValues, UserAuthenticationStore authStore) {
-		try (OctaneApiClient client = getOctaneRestApi(authStore)) {
+		try (OctaneApiClient client = createOctaneApiClient(authStore)) {
         	return octaneBugParamHelper.onParameterChange(client, changedParamIdentifier, currentValues);
         }
 	}
@@ -174,8 +176,9 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     }
 
     private Bug fileBug(Map<String, String> params, UserAuthenticationStore authStore) {
-    	try (OctaneApiClient client = getOctaneRestApi(authStore)) {
-        	return client.getBug(client.fileBug(octaneBugParamHelper.getBugContents(client, params)));
+    	try (OctaneApiClient client = createOctaneApiClient(authStore)) {
+        	String bugId = client.fileBug(octaneBugParamHelper.getBugContents(client, params));
+			return fetchBugDetails(client, bugId);
         }
 	}
 
@@ -184,9 +187,13 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
     @Override
     public Bug fetchBugDetails(String bugId, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::fetchBugDetails");
-        try (OctaneApiClient client = getOctaneRestApi(authStore)) {
-        	return client.getBug(bugId);
+        try (OctaneApiClient client = createOctaneApiClient(authStore)) {
+        	return fetchBugDetails(client, bugId);
         }
+    }
+    
+    private Bug fetchBugDetails(OctaneApiClient client, String bugId) {
+    	return octaneBugStateHelper.getBug(client, bugId);
     }
 
     @Override
@@ -202,29 +209,35 @@ public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {
 	@Override
     public boolean isBugOpen(Bug bug, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::isBugOpen");
-        return true;
+        return octaneBugStateHelper.isBugOpen(bug);
     }
 
     @Override
     public boolean isBugClosed(Bug bug, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::isBugClosed");
-        return false;
+        return octaneBugStateHelper.isBugClosed(bug);
     }
 
     @Override
     public boolean isBugClosedAndCanReOpen(Bug bug, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::isBugClosedAndCanReOpen");
-        return false;
+        return octaneBugStateHelper.isBugClosedAndCanReOpen(bug);
     }
 
     @Override
     public void reOpenBug(Bug bug, String comment, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::reOpenBug");
+        try (OctaneApiClient client = createOctaneApiClient(authStore)) {
+        	octaneBugStateHelper.reOpenBug(client, bug, comment);
+        }
     }
 
     @Override
     public void addCommentToBug(Bug bug, String comment, UserAuthenticationStore authStore) {
         LOG.info("XXX OctaneBugTrackerPlugin::addCommentToBug");
+        try (OctaneApiClient client = createOctaneApiClient(authStore)) {
+        	client.addCommentToBug(bug.getBugId(), comment);
+        }
     }
 
 }

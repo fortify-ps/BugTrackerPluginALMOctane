@@ -196,6 +196,14 @@ public class OctaneHttpClient implements Closeable {
         return invoke(invocation, returnType);
     }
     
+    public <T> T httpPutRequest(WebTarget webTarget, JsonObject data, Class<T> returnType) {
+    	Invocation invocation = webTarget.request(MediaType.APPLICATION_JSON)
+        		.header("ALM_OCTANE_TECH_PREVIEW", "true") // Required for basic authentication
+        		.buildPut(Entity.json(data));
+        
+        return invoke(invocation, returnType);
+	}
+    
     public OctaneConfig getOctaneConfig() {
 		return octaneConfig;
 	}

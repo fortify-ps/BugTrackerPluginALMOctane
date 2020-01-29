@@ -22,15 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.pub.bugtracker.plugin.alm.octane;
+package com.fortify.pub.bugtracker.plugin.alm.octane.client;
 
 import java.util.List;
 import java.util.Map;
 
-import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClient;
-import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneConfig;
-import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneHttpClient;
 import com.fortify.pub.bugtracker.plugin.proxy.ProxyConfigFactory;
+import com.fortify.pub.bugtracker.plugin.alm.octane.OctaneConfigFactory;
 import com.fortify.pub.bugtracker.plugin.proxy.ProxyConfig;
 import com.fortify.pub.bugtracker.support.BugTrackerConfig;
 import com.fortify.pub.bugtracker.support.UserAuthenticationStore;
@@ -54,7 +52,7 @@ import com.fortify.pub.bugtracker.support.UserAuthenticationStore;
  * @author Ruud Senden
  *
  */
-public class BugTrackerOctaneApiClientFactory {
+public class OctaneApiClientFactory {
 	/**
 	 * Add {@link BugTrackerConfig} instances from both {@link OctaneConfigFactory}
 	 * and {@link ProxyConfigFactory} to the given {@link BugTrackerConfig} {@link List}.
@@ -73,7 +71,7 @@ public class BugTrackerOctaneApiClientFactory {
      * 
      * @param bugTrackerConfig
      */
-    public BugTrackerOctaneApiClientFactory(Map<String, String> bugTrackerConfig) {
+    public OctaneApiClientFactory(Map<String, String> bugTrackerConfig) {
 		this.octaneConfig = OctaneConfigFactory.createOctaneConfig(bugTrackerConfig);
 		this.proxyConfig = ProxyConfigFactory.createProxyConfig(bugTrackerConfig, this.getOctaneConfig().getBaseUrl());
 	}
@@ -105,7 +103,7 @@ public class BugTrackerOctaneApiClientFactory {
 	 * @param authStore
 	 * @return
 	 */
-	public final OctaneApiClient getOctaneRestApi(UserAuthenticationStore authStore) {
+	public final OctaneApiClient createOctaneApiClient(UserAuthenticationStore authStore) {
     	return new OctaneApiClient(getOctaneHttpClient(authStore));
     }
 

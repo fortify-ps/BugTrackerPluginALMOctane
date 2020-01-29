@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.pub.bugtracker.plugin.alm.octane.client;
 
+import java.io.Closeable;
 import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.List;
@@ -37,13 +38,11 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.fortify.pub.bugtracker.support.Bug;
-
 /**
  * This class provides functionality for invoking specific ALM Octane
  * REST endpoints.
  */
-public class OctaneApiClient implements AutoCloseable {
+public class OctaneApiClient implements Closeable, AutoCloseable {
 	private static final Log LOG = LogFactory.getLog(OctaneApiClient.class);
 	private static final MessageFormat FMT_DEEPLINK = new MessageFormat("{0}/ui/entity-navigation?p={1}/{2}&entityType=work_item&id={3}");
 	public static final MessageFormat FMT_BUG_ID = new MessageFormat("{0}/{1}/{2}");
@@ -74,50 +73,67 @@ public class OctaneApiClient implements AutoCloseable {
     			.queryParam("limit", 1);
     	client.httpGetRequest(target, JsonObject.class);
     }
-	
-    /*
-	private JSONMap submitOrUpdateIssue(OctaneSharedSpaceAndWorkspaceId sharedSpaceAndWorkspaceId, Map<String, Object> issueData, String httpMethod) {
-		JSONMap issueEntry = new JSONMap();
-		issueEntry.putPaths(issueData);
-		replaceEntityNamesWithIds(sharedSpaceAndWorkspaceId, issueEntry);
-		JSONMap data = new JSONMap();
-		data.put("data", new JSONMap[]{issueEntry});
-		return executeRequest(httpMethod, getBaseResource()
-				.path("/api/shared_spaces/")
-				.path(sharedSpaceAndWorkspaceId.getSharedSpaceUid())
-				.path("/workspaces/")
-				.path(sharedSpaceAndWorkspaceId.getWorkspaceId())
-				.path("/defects"),
-				Entity.entity(data, "application/json"), JSONMap.class);
-	}
-	*/
     
     public final String fileBug(final JsonObject bugContents) {
-    	final JsonObject wrappedBugContents = wrapAsDataArray(bugContents);
+    	final JsonObject wrappedBugContents = JsonHelper.wrapAsDataArray(bugContents);
 		LOG.info("fileBug: "+wrappedBugContents.toString());
 		WebTarget target = client
                 .getApiWorkspaceTarget()
                 .path("defects");
 		JsonObject result = client.httpPostRequest(target, wrappedBugContents, JsonObject.class);
-		return result.getJsonArray("data").getValuesAs(this::getEntityId).get(0);
+		return result.getJsonArray("data").getValuesAs(this::getEntityIdFromJson).get(0);
+	}
+    
+    public void addCommentToBug(String defectId, String comment) {
+    	final JsonObject commentObject = Json.createObjectBuilder()
+				.add("owner_work_item", JsonHelper.getReferenceObjectForDefectId(defectId))
+				.add("text", comment)
+				.build();
+    	final JsonObject wrappedCommentObject = JsonHelper.wrapAsDataArray(commentObject);
+    	
+    	WebTarget target = client
+                .getApiWorkspaceTarget()
+                .path("comments");
+    	
+    	client.httpPostRequest(target, wrappedCommentObject, JsonObject.class);
 	}
 
-    public final Bug getBug(final String id) {
+	public void transitionToPhaseId(String defectId, String phaseId) {
+		final JsonObject bugUpdateContents = Json.createObjectBuilder()
+			.add("phase", JsonHelper.getReferenceObjectForPhaseId(phaseId))
+			.build();
+		
+		WebTarget target = client
+                .getApiWorkspaceTarget()
+                .path("defects")
+                .path(defectId);
+		
+		client.httpPutRequest(target, bugUpdateContents, JsonObject.class);
+	}
+
+    public final String getPhaseIdForDefectId(final String defectId) {
+    	return getPhaseForDefectId(defectId).getString("id");
+    }
+    
+    public final String getPhaseNameForDefectId(final String defectId) {
+    	return getPhaseForDefectId(defectId).getString("name");
+    }
+    
+    private final JsonObject getPhaseForDefectId(final String defectId) {
         WebTarget target = client
                 .getApiWorkspaceTarget()
                 .path("defects")
-                .path(id)
+                .path(defectId)
                 .queryParam("fields", "phase");
 
-        JsonObject json = client.httpGetRequest(target, JsonObject.class);
-        return new Bug(id, json.getJsonObject("phase").getString("id"));
+        return client.httpGetRequest(target, JsonObject.class).getJsonObject("phase");
     }
 
 	public final List<String> getWorkItemRootNames() {
 		return queryEntityNames("work_item_roots", null);
 	}
 	
-	public final String getWorkItemRootId(String rootName) {
+	public final String getIdForWorkItemRootName(String rootName) {
 		final String query = String.format("\"name EQ '%s'\"", rootName);
 		return StringUtils.isBlank(rootName)
 				? null
@@ -131,7 +147,7 @@ public class OctaneApiClient implements AutoCloseable {
 				: queryEntityNames("epics", query);
 	}
 	
-	public final String getEpicId(String rootName, String epicName) {
+	public final String getIdForEpicName(String rootName, String epicName) {
 		final String query = String.format("\"name EQ '%s' ; parent EQ {name EQ '%s'}\"", epicName, rootName);
 		return StringUtils.isBlank(rootName) || StringUtils.isBlank(epicName)
 				? null
@@ -145,7 +161,7 @@ public class OctaneApiClient implements AutoCloseable {
 				: queryEntityNames("features", query);
 	}
 	
-	public final String getFeatureId(String rootName, String epicName, String featureName) {
+	public final String getIdForFeatureName(String rootName, String epicName, String featureName) {
 		final String query = String.format("\"name EQ '%s' ; parent EQ {name EQ '%s' ; parent EQ {name EQ '%s'}}\"", featureName, epicName, rootName);
 		return StringUtils.isBlank(rootName) || StringUtils.isBlank(epicName) || StringUtils.isBlank(featureName)
 				? null
@@ -153,22 +169,22 @@ public class OctaneApiClient implements AutoCloseable {
 	}
 	
 	private final List<String> queryEntityNames(String entityName, String query) {
-		List<String> result = queryEntities(entityName, query, "name").getValuesAs(this::getEntityName);
+		List<String> result = queryEntities(entityName, query, "name").getValuesAs(this::getEntityNameFromJson);
 		LOG.info(String.format("queryEntityNames(%s, %s): %s", entityName, query, result.toString()));
 		return result;
 	}
 	
 	private final List<String> queryEntityIds(String entityName, String query) {
-		List<String> result = queryEntities(entityName, query, "id").getValuesAs(this::getEntityId);
+		List<String> result = queryEntities(entityName, query, "id").getValuesAs(this::getEntityIdFromJson);
 		LOG.info(String.format("queryEntityNames(%s, %s): %s", entityName, query, result.toString()));
 		return result;
 	}
 	
-	private final String getEntityName(JsonObject json) {
+	private final String getEntityNameFromJson(JsonObject json) {
 		return json.getString("name");
 	}
 	
-	private final String getEntityId(JsonObject json) {
+	private final String getEntityIdFromJson(JsonObject json) {
 		return json.getString("id");
 	}
 	
@@ -184,11 +200,5 @@ public class OctaneApiClient implements AutoCloseable {
 		}
 		JsonObject json = client.httpGetRequest(target, JsonObject.class);
 		return json.getJsonArray("data");
-	}
-    
-    private JsonObject wrapAsDataArray(JsonObject json) {
-		return Json.createObjectBuilder()
-				.add("data", Json.createArrayBuilder().add(json).build())
-				.build();
 	}
 }

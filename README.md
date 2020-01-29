@@ -1,11 +1,16 @@
-# WORK IN PROGRESS
-
-This project is not yet functional; please check back later.
-
 # Fortify SSC Bug Tracker Plugin for ALM Octane
 
 This project provides an SSC Bug Tracker Plugin implementation for submitting vulnerabilities 
-from Fortify SSC to ALM Octane. 
+from Fortify SSC to ALM Octane. This plugin should be mostly functional, although there may
+be some further changes before a first release.
+
+Some (potential) to-do's before an initial release:
+
+* Add additional bug parameters like severity/priority/due date/...
+* Further testing
+* Further code improvements 
+* Further documentation improvements
+
 
 ## Building & installing the plugin
 

@@ -142,8 +142,8 @@ class OctaneApiClientTest {
 		return Json.createObjectBuilder()
 				.add("name", info+"-"+UUID.randomUUID().toString())
 				.add("description", "TestDescription")
-				.add("parent", JsonHelper.getReferenceObject("work_item", "2017"))
-				.add("phase", JsonHelper.getReferenceObjectForPhaseId("phase.defect.new"))
+				.add("parent", OctaneEntity.WORK_ITEM.getReferenceObjectForId("2017"))
+				.add("phase", OctaneEntity.PHASE.getReferenceObjectForId("phase.defect.new"))
 				.build();
 	}
 }

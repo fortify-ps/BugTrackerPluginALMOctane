@@ -68,44 +68,44 @@ public class OctaneApiClient implements Closeable, AutoCloseable {
      */
     public void validateConnection() {
     	WebTarget target = client.getApiWorkspaceTarget()
-    			.path("work_item_roots")
+    			.path(OctaneEntity.WORK_ITEM_ROOT.plural())
     			.queryParam("fields", "id")
     			.queryParam("limit", 1);
     	client.httpGetRequest(target, JsonObject.class);
     }
     
     public final String fileBug(final JsonObject bugContents) {
-    	final JsonObject wrappedBugContents = JsonHelper.wrapAsDataArray(bugContents);
+    	final JsonObject wrappedBugContents = wrapAsDataArray(bugContents);
 		LOG.info("fileBug: "+wrappedBugContents.toString());
 		WebTarget target = client
                 .getApiWorkspaceTarget()
-                .path("defects");
+                .path(OctaneEntity.DEFECT.plural());
 		JsonObject result = client.httpPostRequest(target, wrappedBugContents, JsonObject.class);
 		return result.getJsonArray("data").getValuesAs(this::getEntityIdFromJson).get(0);
 	}
     
     public void addCommentToBug(String defectId, String comment) {
     	final JsonObject commentObject = Json.createObjectBuilder()
-				.add("owner_work_item", JsonHelper.getReferenceObjectForDefectId(defectId))
+				.add("owner_work_item", OctaneEntity.DEFECT.getReferenceObjectForId(defectId))
 				.add("text", comment)
 				.build();
-    	final JsonObject wrappedCommentObject = JsonHelper.wrapAsDataArray(commentObject);
+    	final JsonObject wrappedCommentObject = wrapAsDataArray(commentObject);
     	
     	WebTarget target = client
                 .getApiWorkspaceTarget()
-                .path("comments");
+                .path(OctaneEntity.COMMENT.plural());
     	
     	client.httpPostRequest(target, wrappedCommentObject, JsonObject.class);
 	}
 
 	public void transitionToPhaseId(String defectId, String phaseId) {
 		final JsonObject bugUpdateContents = Json.createObjectBuilder()
-			.add("phase", JsonHelper.getReferenceObjectForPhaseId(phaseId))
+			.add("phase", OctaneEntity.PHASE.getReferenceObjectForId(phaseId))
 			.build();
 		
 		WebTarget target = client
                 .getApiWorkspaceTarget()
-                .path("defects")
+                .path(OctaneEntity.DEFECT.plural())
                 .path(defectId);
 		
 		client.httpPutRequest(target, bugUpdateContents, JsonObject.class);
@@ -122,7 +122,7 @@ public class OctaneApiClient implements Closeable, AutoCloseable {
     private final JsonObject getPhaseForDefectId(final String defectId) {
         WebTarget target = client
                 .getApiWorkspaceTarget()
-                .path("defects")
+                .path(OctaneEntity.DEFECT.plural())
                 .path(defectId)
                 .queryParam("fields", "phase");
 
@@ -130,53 +130,53 @@ public class OctaneApiClient implements Closeable, AutoCloseable {
     }
 
 	public final List<String> getWorkItemRootNames() {
-		return queryEntityNames("work_item_roots", null);
+		return queryEntityNames(OctaneEntity.WORK_ITEM_ROOT, null);
 	}
 	
 	public final String getIdForWorkItemRootName(String rootName) {
 		final String query = String.format("\"name EQ '%s'\"", rootName);
 		return StringUtils.isBlank(rootName)
 				? null
-				: queryEntityIds("work_item_roots", query).get(0);
+				: queryEntityIds(OctaneEntity.WORK_ITEM_ROOT, query).get(0);
 	}
 
 	public final List<String> getEpicNames(String rootName) {
 		final String query = String.format("\"parent EQ {name EQ '%s'}\"", rootName);
 		return StringUtils.isBlank(rootName) 
 				? Collections.emptyList()
-				: queryEntityNames("epics", query);
+				: queryEntityNames(OctaneEntity.EPIC, query);
 	}
 	
 	public final String getIdForEpicName(String rootName, String epicName) {
 		final String query = String.format("\"name EQ '%s' ; parent EQ {name EQ '%s'}\"", epicName, rootName);
 		return StringUtils.isBlank(rootName) || StringUtils.isBlank(epicName)
 				? null
-				: queryEntityIds("epics", query).get(0);
+				: queryEntityIds(OctaneEntity.EPIC, query).get(0);
 	}
 
 	public final List<String> getFeatureNames(String rootName, String epicName) {
 		final String query = String.format("\"parent EQ {name EQ '%s' ; parent EQ {name EQ '%s'}}\"", epicName, rootName);
 		return StringUtils.isBlank(rootName) || StringUtils.isBlank(epicName)
 				? Collections.emptyList()
-				: queryEntityNames("features", query);
+				: queryEntityNames(OctaneEntity.FEATURE, query);
 	}
 	
 	public final String getIdForFeatureName(String rootName, String epicName, String featureName) {
 		final String query = String.format("\"name EQ '%s' ; parent EQ {name EQ '%s' ; parent EQ {name EQ '%s'}}\"", featureName, epicName, rootName);
 		return StringUtils.isBlank(rootName) || StringUtils.isBlank(epicName) || StringUtils.isBlank(featureName)
 				? null
-				: queryEntityIds("features", query).get(0);
+				: queryEntityIds(OctaneEntity.FEATURE, query).get(0);
 	}
 	
-	private final List<String> queryEntityNames(String entityName, String query) {
-		List<String> result = queryEntities(entityName, query, "name").getValuesAs(this::getEntityNameFromJson);
-		LOG.info(String.format("queryEntityNames(%s, %s): %s", entityName, query, result.toString()));
+	private final List<String> queryEntityNames(OctaneEntity entity, String query) {
+		List<String> result = queryEntities(entity, query, "name").getValuesAs(this::getEntityNameFromJson);
+		LOG.info(String.format("queryEntityNames(%s, %s): %s", entity.plural(), query, result.toString()));
 		return result;
 	}
 	
-	private final List<String> queryEntityIds(String entityName, String query) {
-		List<String> result = queryEntities(entityName, query, "id").getValuesAs(this::getEntityIdFromJson);
-		LOG.info(String.format("queryEntityNames(%s, %s): %s", entityName, query, result.toString()));
+	private final List<String> queryEntityIds(OctaneEntity entity, String query) {
+		List<String> result = queryEntities(entity, query, "id").getValuesAs(this::getEntityIdFromJson);
+		LOG.info(String.format("queryEntityNames(%s, %s): %s", entity.plural(), query, result.toString()));
 		return result;
 	}
 	
@@ -189,8 +189,8 @@ public class OctaneApiClient implements Closeable, AutoCloseable {
 	}
 	
 	// Note that this currently does not handle paging
-    private final JsonArray queryEntities(String entityName, String query, String... fields) {
-		WebTarget target = client.getApiWorkspaceTarget().path(entityName);
+    private final JsonArray queryEntities(OctaneEntity entity, String query, String... fields) {
+		WebTarget target = client.getApiWorkspaceTarget().path(entity.plural());
 		if ( StringUtils.isNotBlank(query) ) {
 			// Somewhat strange construct to avoid Jersey interpreting the Octane query as a Jersey template
 			target = target.queryParam("query", "{query}").resolveTemplate("query", query);
@@ -200,5 +200,11 @@ public class OctaneApiClient implements Closeable, AutoCloseable {
 		}
 		JsonObject json = client.httpGetRequest(target, JsonObject.class);
 		return json.getJsonArray("data");
+	}
+    
+    private JsonObject wrapAsDataArray(JsonObject json) {
+		return Json.createObjectBuilder()
+				.add("data", Json.createArrayBuilder().add(json).build())
+				.build();
 	}
 }

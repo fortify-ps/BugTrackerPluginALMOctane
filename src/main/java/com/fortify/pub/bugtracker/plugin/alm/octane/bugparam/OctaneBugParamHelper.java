@@ -33,8 +33,8 @@ import javax.json.JsonValue;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fortify.pub.bugtracker.plugin.alm.octane.client.JsonHelper;
 import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClient;
+import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneEntity;
 import com.fortify.pub.bugtracker.plugin.fields.IBugParamDefinitionProvider;
 import com.fortify.pub.bugtracker.support.BugParam;
 
@@ -53,7 +53,7 @@ public class OctaneBugParamHelper {
 	public JsonObject getBugContents(OctaneApiClient client, Map<String, String> params) {
 		return Json.createObjectBuilder()
 				.add("parent", getParent(client, params))
-				.add("phase", JsonHelper.getReferenceObjectForPhaseId("phase.defect.new"))
+				.add("phase", OctaneEntity.PHASE.getReferenceObjectForId("phase.defect.new"))
 				.add("name", OctaneDefaultBugParamDefinition.NAME.definition().getNormalizedValue(params, 254))
 				.add("description", OctaneDefaultBugParamDefinition.DESCRIPTION.definition().getNormalizedValue(params))
 				.build();
@@ -73,10 +73,10 @@ public class OctaneBugParamHelper {
 	}
 
 	private JsonValue getReferenceObjectForWorkItemRootName(OctaneApiClient client, String rootName) {
-		return JsonHelper.getReferenceObjectForWorkItemRootId(client.getIdForWorkItemRootName(rootName));
+		return OctaneEntity.WORK_ITEM_ROOT.getReferenceObjectForId(client.getIdForWorkItemRootName(rootName));
 	}
 
 	private JsonValue getReferenceObjectForFeatureName(OctaneApiClient client, String rootName, String epicName, String featureName) {
-		return JsonHelper.getReferenceObjectForFeatureId(client.getIdForFeatureName(rootName, epicName, featureName));
+		return OctaneEntity.FEATURE.getReferenceObjectForId(client.getIdForFeatureName(rootName, epicName, featureName));
 	}
 }

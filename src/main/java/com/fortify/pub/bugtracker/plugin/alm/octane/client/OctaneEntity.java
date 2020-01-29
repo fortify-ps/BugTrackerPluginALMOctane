@@ -27,42 +27,21 @@ package com.fortify.pub.bugtracker.plugin.alm.octane.client;
 import javax.json.Json;
 import javax.json.JsonObject;
 
-public class JsonHelper {
-
-	public JsonHelper() {
-		// TODO Auto-generated constructor stub
+public enum OctaneEntity {
+	WORK_ITEM_ROOT, EPIC, FEATURE, DEFECT, PHASE, WORK_ITEM, COMMENT;
+	
+	public final String single() {
+		return name().toLowerCase();
 	}
-
-	public static final JsonObject getReferenceObject(String type, String id) {
+	
+	public final String plural() {
+		return single()+"s";
+	}
+	
+	public final JsonObject getReferenceObjectForId(String id) {
 		return Json.createObjectBuilder()
-			.add("type", type)
+			.add("type", single())
 			.add("id", id)
 			.build();
-	}
-	
-	public static final JsonObject getReferenceObjectForDefectId(String defectId) {
-		return getReferenceObject("defect", defectId);
-	}
-
-	public static final JsonObject getReferenceObjectForPhaseId(String phaseId) {
-		return getReferenceObject("phase", phaseId);
-	}
-	
-	public static final JsonObject getReferenceObjectForWorkItemRootId(String phaseId) {
-		return getReferenceObject("work_item_root", phaseId);
-	}
-	
-	public static final JsonObject getReferenceObjectForEpicId(String phaseId) {
-		return getReferenceObject("epic", phaseId);
-	}
-	
-	public static final JsonObject getReferenceObjectForFeatureId(String phaseId) {
-		return getReferenceObject("feature", phaseId);
-	}
-	
-	public static final JsonObject wrapAsDataArray(JsonObject json) {
-		return Json.createObjectBuilder()
-				.add("data", Json.createArrayBuilder().add(json).build())
-				.build();
 	}
 }

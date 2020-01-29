@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.pub.bugtracker.plugin.alm.octane.client;
+package com.fortify.pub.bugtracker.plugin.alm.octane.config;
 
 import java.net.URL;
 

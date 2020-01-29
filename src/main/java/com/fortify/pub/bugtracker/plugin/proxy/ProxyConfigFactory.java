@@ -30,8 +30,8 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.fortify.pub.bugtracker.plugin.fields.BugTrackerConfigDefinition;
-import com.fortify.pub.bugtracker.plugin.fields.IBugTrackerConfigDefinitionProvider;
+import com.fortify.pub.bugtracker.plugin.config.BugTrackerConfigDefinition;
+import com.fortify.pub.bugtracker.plugin.config.IBugTrackerConfigDefinitionProvider;
 import com.fortify.pub.bugtracker.support.BugTrackerConfig;
 
 /**

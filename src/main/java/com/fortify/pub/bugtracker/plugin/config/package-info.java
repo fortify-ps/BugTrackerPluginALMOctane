@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2017 EntIT Software LLC
+ * (c) Copyright 2017 EntIT Software LLC, a Micro Focus company
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,34 +22,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.pub.bugtracker.plugin.alm.octane.client;
-
-import java.net.MalformedURLException;
-
-import javax.ws.rs.HttpMethod;
-import javax.ws.rs.client.WebTarget;
-
-import org.junit.jupiter.api.Test;
-
-import com.fortify.pub.bugtracker.plugin.alm.octane.client.http.OctaneHttpClient;
-
-class OctaneHttpClientTest {
-
-	@Test
-	void testHttpGetRequest() throws MalformedURLException {
-		OctaneHttpClient client = TestHelper.getOctaneHttpClient();
-		if ( client!=null ) {
-			System.out.println(client.httpRequest(HttpMethod.GET, client.getBaseTarget(), String.class));
-		}
-	}
-	
-	@Test
-	void test() throws Exception {
-		OctaneHttpClient client = TestHelper.getOctaneHttpClient();
-		if ( client!=null ) {
-			WebTarget target = client.getApiWorkspaceTarget().path("phases");
-			System.out.println(client.httpRequest(HttpMethod.GET, target, String.class));
-		}
-	}
-
-}
+/**
+ * This package contains generic functionality for defining 
+ * {@link com.fortify.pub.bugtracker.support.BugTrackerConfig}
+ * instances.
+ * 
+ * @author Ruud Senden
+ *
+ */
+package com.fortify.pub.bugtracker.plugin.config;

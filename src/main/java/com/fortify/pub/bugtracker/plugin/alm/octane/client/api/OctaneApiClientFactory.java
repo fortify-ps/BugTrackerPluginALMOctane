@@ -22,13 +22,15 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.pub.bugtracker.plugin.alm.octane.client;
+package com.fortify.pub.bugtracker.plugin.alm.octane.client.api;
 
 import java.util.List;
 import java.util.Map;
 
 import com.fortify.pub.bugtracker.plugin.proxy.ProxyConfigFactory;
-import com.fortify.pub.bugtracker.plugin.alm.octane.OctaneConfigFactory;
+import com.fortify.pub.bugtracker.plugin.alm.octane.client.http.OctaneHttpClient;
+import com.fortify.pub.bugtracker.plugin.alm.octane.config.OctaneConfig;
+import com.fortify.pub.bugtracker.plugin.alm.octane.config.OctaneConfigFactory;
 import com.fortify.pub.bugtracker.plugin.proxy.ProxyConfig;
 import com.fortify.pub.bugtracker.support.BugTrackerConfig;
 import com.fortify.pub.bugtracker.support.UserAuthenticationStore;
@@ -104,7 +106,7 @@ public class OctaneApiClientFactory {
 	 * @return
 	 */
 	public final OctaneApiClient createOctaneApiClient(UserAuthenticationStore authStore) {
-    	return new OctaneApiClient(getOctaneHttpClient(authStore));
+    	return new OctaneApiClient(createOctaneHttpClient(authStore));
     }
 
 	/**
@@ -114,7 +116,7 @@ public class OctaneApiClientFactory {
 	 * @param authStore
 	 * @return
 	 */
-	private final OctaneHttpClient getOctaneHttpClient(UserAuthenticationStore authStore) {
+	private final OctaneHttpClient createOctaneHttpClient(UserAuthenticationStore authStore) {
 		return new OctaneHttpClient(getOctaneConfig(), authStore, getProxyConfig());
 	}
 }

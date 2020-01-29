@@ -22,48 +22,46 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.pub.bugtracker.plugin.fields;
+package com.fortify.pub.bugtracker.plugin.config;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fortify.pub.bugtracker.support.BugParam;
+import com.fortify.pub.bugtracker.support.BugTrackerConfig;
 
 /**
- * This interface provides access to a {@link BugParamDefinition} instance
+ * This interface provides access to a {@link BugTrackerConfigDefinition} instance
  * through the {@link #definition()} method.
  * 
  * @author Ruud Senden
- *
- * @param <OnChangeHandler>
  */
-public interface IBugParamDefinitionProvider<OnChangeHandler> {
-	public BugParamDefinition<OnChangeHandler> definition();
+public interface IBugTrackerConfigDefinitionProvider {
+	public BugTrackerConfigDefinition definition();
 	
 	/**
-	 * Static method for adding a {@link BugParam} instance as produced
-	 * by each given {@link IBugParamDefinitionProvider} to the given 
-	 * {@link BugParam} {@link List}.
+	 * Static method for adding a {@link BugTrackerConfig} instance as produced
+	 * by each given {@link IBugTrackerConfigDefinitionProvider} to the given 
+	 * {@link BugTrackerConfig} {@link List}.
 	 * 
 	 * @param list
 	 * @param providers
 	 */
-	public static void addBugParams(List<BugParam> list, IBugParamDefinitionProvider<?>[] providers) {
-		for ( IBugParamDefinitionProvider<?> provider : providers ) { 
-			list.add(provider.definition().createBugParam()); 
+	public static void addBugTrackerConfigs(List<BugTrackerConfig> list, IBugTrackerConfigDefinitionProvider[] providers) {
+		for ( IBugTrackerConfigDefinitionProvider provider : providers ) { 
+			list.add(provider.definition().createBugTrackerConfig()); 
 		}
 	}
 	
 	/**
-	 * Static method for retrieving a {@link List} of {@link BugParam} instances 
-	 * as produced by each given {@link IBugParamDefinitionProvider}.
+	 * Static method for retrieving a {@link List} of {@link BugTrackerConfig} instances 
+	 * as produced by each given {@link IBugTrackerConfigDefinitionProvider}.
 	 * 
 	 * @param list
 	 * @param providers
 	 */
-	public static List<BugParam> getBugParams(IBugParamDefinitionProvider<?>[] providers) {
-		List<BugParam> result = new ArrayList<>(providers.length);
-		addBugParams(result, providers);
+	public static List<BugTrackerConfig> getBugTrackerConfigs(IBugTrackerConfigDefinitionProvider[] providers) {
+		List<BugTrackerConfig> result = new ArrayList<>(providers.length);
+		addBugTrackerConfigs(result, providers);
 		return result;
 	}
 }

@@ -22,26 +22,48 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.pub.bugtracker.plugin.alm.octane.client;
+package com.fortify.pub.bugtracker.plugin.bugparam;
 
-import javax.json.Json;
-import javax.json.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
 
-public enum OctaneEntity {
-	WORK_ITEM_ROOT, EPIC, FEATURE, DEFECT, PHASE, WORK_ITEM, COMMENT;
+import com.fortify.pub.bugtracker.support.BugParam;
+
+/**
+ * This interface provides access to a {@link BugParamDefinition} instance
+ * through the {@link #definition()} method.
+ * 
+ * @author Ruud Senden
+ *
+ * @param <OnChangeHandler>
+ */
+public interface IBugParamDefinitionProvider<OnChangeHandler> {
+	public BugParamDefinition<OnChangeHandler> definition();
 	
-	public final String single() {
-		return name().toLowerCase();
+	/**
+	 * Static method for adding a {@link BugParam} instance as produced
+	 * by each given {@link IBugParamDefinitionProvider} to the given 
+	 * {@link BugParam} {@link List}.
+	 * 
+	 * @param list
+	 * @param providers
+	 */
+	public static void addBugParams(List<BugParam> list, IBugParamDefinitionProvider<?>[] providers) {
+		for ( IBugParamDefinitionProvider<?> provider : providers ) { 
+			list.add(provider.definition().createBugParam()); 
+		}
 	}
 	
-	public final String plural() {
-		return single()+"s";
-	}
-	
-	public final JsonObject getReferenceObjectForId(String id) {
-		return Json.createObjectBuilder()
-			.add("type", single())
-			.add("id", id)
-			.build();
+	/**
+	 * Static method for retrieving a {@link List} of {@link BugParam} instances 
+	 * as produced by each given {@link IBugParamDefinitionProvider}.
+	 * 
+	 * @param list
+	 * @param providers
+	 */
+	public static List<BugParam> getBugParams(IBugParamDefinitionProvider<?>[] providers) {
+		List<BugParam> result = new ArrayList<>(providers.length);
+		addBugParams(result, providers);
+		return result;
 	}
 }

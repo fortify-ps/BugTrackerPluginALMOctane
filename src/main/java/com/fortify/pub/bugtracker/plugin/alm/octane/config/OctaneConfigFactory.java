@@ -22,14 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.pub.bugtracker.plugin.alm.octane;
+package com.fortify.pub.bugtracker.plugin.alm.octane.config;
 
 import java.util.List;
 import java.util.Map;
 
-import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneConfig;
-import com.fortify.pub.bugtracker.plugin.fields.BugTrackerConfigDefinition;
-import com.fortify.pub.bugtracker.plugin.fields.IBugTrackerConfigDefinitionProvider;
+import com.fortify.pub.bugtracker.plugin.config.BugTrackerConfigDefinition;
+import com.fortify.pub.bugtracker.plugin.config.IBugTrackerConfigDefinitionProvider;
 import com.fortify.pub.bugtracker.support.BugTrackerConfig;
 
 /**

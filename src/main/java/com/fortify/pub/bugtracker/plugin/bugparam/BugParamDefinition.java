@@ -22,20 +22,21 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.pub.bugtracker.plugin.fields;
+package com.fortify.pub.bugtracker.plugin.bugparam;
 
 import java.util.List;
 
 import org.apache.commons.lang3.Validate;
 import org.glassfish.jersey.internal.util.Producer;
 
+import com.fortify.pub.bugtracker.plugin.valueaccessor.ValueAccessor;
 import com.fortify.pub.bugtracker.support.BugParam;
 import com.fortify.pub.bugtracker.support.BugParamChoice;
 
 /**
  * This class describes a {@link BugParam} definition, consisting of a
  * {@link Producer} for producing {@link BugParam} instances, and an optional
- * onChange handler for these {@link BugParam} instances.
+ * onChange handler for {@link BugParamChoice} instances.
  * 
  * @author Ruud Senden
  *

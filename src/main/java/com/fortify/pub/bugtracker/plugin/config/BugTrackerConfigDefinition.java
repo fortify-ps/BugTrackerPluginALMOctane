@@ -22,46 +22,40 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.pub.bugtracker.plugin.fields;
+package com.fortify.pub.bugtracker.plugin.config;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.glassfish.jersey.internal.util.Producer;
 
+import com.fortify.pub.bugtracker.plugin.valueaccessor.ValueAccessor;
 import com.fortify.pub.bugtracker.support.BugTrackerConfig;
 
 /**
- * This interface provides access to a {@link BugTrackerConfigDefinition} instance
- * through the {@link #definition()} method.
+ * This class describes a {@link BugTrackerConfig} definition, consisting of a
+ * {@link Producer} for producing {@link BugTrackerConfig} instances.
  * 
  * @author Ruud Senden
  */
-public interface IBugTrackerConfigDefinitionProvider {
-	public BugTrackerConfigDefinition definition();
+public class BugTrackerConfigDefinition extends ValueAccessor {
+	private final Producer<BugTrackerConfig> bugTrackerConfigProducer;
 	
-	/**
-	 * Static method for adding a {@link BugTrackerConfig} instance as produced
-	 * by each given {@link IBugTrackerConfigDefinitionProvider} to the given 
-	 * {@link BugTrackerConfig} {@link List}.
-	 * 
-	 * @param list
-	 * @param providers
-	 */
-	public static void addBugTrackerConfigs(List<BugTrackerConfig> list, IBugTrackerConfigDefinitionProvider[] providers) {
-		for ( IBugTrackerConfigDefinitionProvider provider : providers ) { 
-			list.add(provider.definition().createBugTrackerConfig()); 
-		}
+	public BugTrackerConfigDefinition(String identifier, Producer<BugTrackerConfig> bugTrackerConfigProducer) {
+		super(identifier);
+		this.bugTrackerConfigProducer = bugTrackerConfigProducer;
+	}
+	
+	private final Producer<BugTrackerConfig> getBugTrackerConfigProducer() {
+		return bugTrackerConfigProducer;
 	}
 	
 	/**
-	 * Static method for retrieving a {@link List} of {@link BugTrackerConfig} instances 
-	 * as produced by each given {@link IBugTrackerConfigDefinitionProvider}.
+	 * This method returns a {@link BugTrackerConfig} instance as produced by the
+	 * configured {@link Producer}. The produced {@link BugTrackerConfig}
+	 * instance will be updated with the identifier returned by
+	 * {@link #getIdentifier()}.
 	 * 
-	 * @param list
-	 * @param providers
+	 * @return
 	 */
-	public static List<BugTrackerConfig> getBugTrackerConfigs(IBugTrackerConfigDefinitionProvider[] providers) {
-		List<BugTrackerConfig> result = new ArrayList<>(providers.length);
-		addBugTrackerConfigs(result, providers);
-		return result;
+	public final BugTrackerConfig createBugTrackerConfig() {
+		return getBugTrackerConfigProducer().call().setIdentifier(getIdentifier());
 	}
 }

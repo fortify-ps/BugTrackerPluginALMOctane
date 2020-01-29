@@ -23,11 +23,22 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 /**
- * This package contains generic functionality for defining 
- * {@link com.fortify.pub.bugtracker.support.BugTrackerConfig}
- * and {@link com.fortify.pub.bugtracker.support.BugParam} instances.
+ * This package contains two generic base classes: 
+ * <ul>
+ *  <li>{@link com.fortify.pub.bugtracker.plugin.valueaccessor.Identifiable}
+ *      is a very generic base class that provides access to some identifier
+ *      that was passed to the constructor.</li>
+ *  <li>{@link com.fortify.pub.bugtracker.plugin.valueaccessor.ValueAccessor}
+ *      extends {@link com.fortify.pub.bugtracker.plugin.valueaccessor.Identifiable};
+ *      this class provides various getter methods for retrieving values from
+ *      identifier-to-value maps, based on the configured identifier.</li>
+ * <ul> 
+ * 
+ * These base classes are used by {@link com.fortify.pub.bugtracker.plugin.bugparam.BugParamDefinition}
+ * and {@link com.fortify.pub.bugtracker.plugin.config.BugTrackerConfigDefinition} to provide
+ * access to bug parameter and bug tracker configuration values. 
  * 
  * @author Ruud Senden
  *
  */
-package com.fortify.pub.bugtracker.plugin.fields;
+package com.fortify.pub.bugtracker.plugin.valueaccessor;

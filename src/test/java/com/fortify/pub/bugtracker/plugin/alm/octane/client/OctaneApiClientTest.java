@@ -35,6 +35,9 @@ import javax.json.JsonObject;
 
 import org.junit.jupiter.api.Test;
 
+import com.fortify.pub.bugtracker.plugin.alm.octane.client.api.OctaneApiClient;
+import com.fortify.pub.bugtracker.plugin.alm.octane.client.api.OctaneEntity;
+
 class OctaneApiClientTest {
 	@Test
 	void testValidateConnection() throws Exception {

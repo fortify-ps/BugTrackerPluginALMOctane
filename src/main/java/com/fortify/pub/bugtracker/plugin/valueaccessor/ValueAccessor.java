@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.pub.bugtracker.plugin.fields;
+package com.fortify.pub.bugtracker.plugin.valueaccessor;
 
 import java.net.MalformedURLException;
 import java.net.URL;

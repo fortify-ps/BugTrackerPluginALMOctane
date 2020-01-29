@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2017 EntIT Software LLC
+ * (c) Copyright 2017 EntIT Software LLC, a Micro Focus company
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,30 +22,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.pub.bugtracker.plugin.fields;
-
 /**
- * Simple class that provides a {@link #getIdentifier()} method,
- * returning the configured identifier.
+ * This package contains generic functionality for defining 
+ * {@link com.fortify.pub.bugtracker.support.BugTrackerConfig}
+ * and {@link com.fortify.pub.bugtracker.support.BugParam} instances.
  * 
  * @author Ruud Senden
  *
  */
-public class Identifiable {
-	private final String identifier;
-	
-	/**
-	 * Constructor for configuring the identifier
-	 * @param identifier
-	 */
-	public Identifiable(String identifier) {
-		this.identifier = identifier;
-	}
-
-	/**
-	 * @return an identifier
-	 */
-	public final String getIdentifier() {
-		return identifier;
-	}
-}
+package com.fortify.pub.bugtracker.plugin.bugparam;

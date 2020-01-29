@@ -36,8 +36,8 @@ import com.fortify.pub.bugtracker.plugin.AbstractBatchBugTrackerPlugin;
 import com.fortify.pub.bugtracker.plugin.BugTrackerPluginImplementation;
 import com.fortify.pub.bugtracker.plugin.alm.octane.bugparam.OctaneBugParamHelper;
 import com.fortify.pub.bugtracker.plugin.alm.octane.bugstate.OctaneBugStateHelper;
-import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClient;
-import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClientFactory;
+import com.fortify.pub.bugtracker.plugin.alm.octane.client.api.OctaneApiClient;
+import com.fortify.pub.bugtracker.plugin.alm.octane.client.api.OctaneApiClientFactory;
 import com.fortify.pub.bugtracker.support.Bug;
 import com.fortify.pub.bugtracker.support.BugParam;
 import com.fortify.pub.bugtracker.support.BugSubmission;
@@ -47,7 +47,8 @@ import com.fortify.pub.bugtracker.support.MultiIssueBugSubmission;
 import com.fortify.pub.bugtracker.support.UserAuthenticationStore;
 
 /**
- * Implementation of SSC bug tracker plugin API for ALM Octane.
+ * Implementation of SSC bug tracker plugin API for ALM Octane. Most of the actual work
+ * is deferred to other classes; this plugin class just glues everything together.
  */
 @BugTrackerPluginImplementation
 public class OctaneBugTrackerPlugin extends AbstractBatchBugTrackerPlugin {

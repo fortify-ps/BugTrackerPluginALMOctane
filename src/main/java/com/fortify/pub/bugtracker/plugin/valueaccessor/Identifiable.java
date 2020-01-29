@@ -22,13 +22,30 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.pub.bugtracker.plugin.alm.octane.bugparam;
+package com.fortify.pub.bugtracker.plugin.valueaccessor;
 
-import java.util.List;
+/**
+ * Simple class that provides a {@link #getIdentifier()} method,
+ * returning the configured identifier.
+ * 
+ * @author Ruud Senden
+ *
+ */
+public class Identifiable {
+	private final String identifier;
+	
+	/**
+	 * Constructor for configuring the identifier
+	 * @param identifier
+	 */
+	public Identifiable(String identifier) {
+		this.identifier = identifier;
+	}
 
-import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClient;
-import com.fortify.pub.bugtracker.support.BugParam;
-
-@FunctionalInterface interface IOctaneBugParamChoiceOnChangeHandler {
-	public void onChange(OctaneApiClient client, List<BugParam> currentValues);
+	/**
+	 * @return an identifier
+	 */
+	public final String getIdentifier() {
+		return identifier;
+	}
 }

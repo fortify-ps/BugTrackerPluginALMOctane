@@ -26,14 +26,15 @@ package com.fortify.pub.bugtracker.plugin.alm.octane.bugparam;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.glassfish.jersey.internal.util.Producer;
 
-import com.fortify.pub.bugtracker.plugin.alm.octane.client.OctaneApiClient;
-import com.fortify.pub.bugtracker.plugin.fields.BugParamDefinition;
-import com.fortify.pub.bugtracker.plugin.fields.IBugParamDefinitionProvider;
+import com.fortify.pub.bugtracker.plugin.alm.octane.client.api.OctaneApiClient;
+import com.fortify.pub.bugtracker.plugin.bugparam.BugParamDefinition;
+import com.fortify.pub.bugtracker.plugin.bugparam.IBugParamDefinitionProvider;
 import com.fortify.pub.bugtracker.support.BugParam;
 import com.fortify.pub.bugtracker.support.BugParamChoice;
 import com.fortify.pub.bugtracker.support.BugParamText;
@@ -47,7 +48,7 @@ import com.fortify.pub.bugtracker.support.BugParamTextArea;
  * @author Ruud Senden
  *
  */
-enum OctaneDefaultBugParamDefinition implements IBugParamDefinitionProvider<IOctaneBugParamChoiceOnChangeHandler> {
+enum OctaneDefaultBugParamDefinition implements IBugParamDefinitionProvider<BiConsumer<OctaneApiClient, List<BugParam>>> {
 	TYPE(OctaneDefaultBugParamDefinition::createBugParamType, null),
 	ROOT(OctaneDefaultBugParamDefinition::createBugParamRoot, OctaneDefaultBugParamDefinition::updateEpicParam),
 	EPIC(OctaneDefaultBugParamDefinition::createBugParamEpic, OctaneDefaultBugParamDefinition::updateFeatureParam),
@@ -56,42 +57,91 @@ enum OctaneDefaultBugParamDefinition implements IBugParamDefinitionProvider<IOct
     DESCRIPTION(OctaneDefaultBugParamDefinition::createBugParamDescription, null),
     ;
 	
+	/**
+	 * Create 'Type' parameter, for now just listing 'Defect' as the only available issue type 
+	 * @return
+	 */
 	private static final BugParamChoice createBugParamType() {
 		return (BugParamChoice)new BugParamChoice().setChoiceList(Arrays.asList("Defect"))
 				.setDisplayLabel("Type").setValue("Defect").setRequired(true);
 	}
 	
+	/**
+	 * Create 'Root' parameter, listing all ALM Octane work item root entity names
+	 * @return
+	 */
 	private static final BugParamChoice createBugParamRoot() {
 		return (BugParamChoice)new BugParamChoice().setDisplayLabel("Root").setRequired(true);
 	}
 	
+	/**
+	 * Create 'Epic' parameter, listing all ALM Octane epic entity names for the currently
+	 * selected 'Root' parameter
+	 * @return
+	 */
 	private static final BugParamChoice createBugParamEpic() {
 		return (BugParamChoice)new BugParamChoice().setDisplayLabel("Epic");
 	}
 	
+	/**
+	 * Create 'Feature' parameter, listing all ALM Octane feature entity names for the currently
+	 * selected 'Epic' parameter
+	 * @return
+	 */
 	private static final BugParamChoice createBugParamFeature() {
 		return (BugParamChoice)new BugParamChoice().setDisplayLabel("Feature");
 	}
 	
+	/**
+	 * Create 'Name' parameter, used to generate the defect title
+	 * @return
+	 */
 	private static final BugParam createBugParamName() {
 		return new BugParamText().setDisplayLabel("Name").setMaxLength(254).setRequired(true)
 				.setValue("Fix $ATTRIBUTE_CATEGORY$ in $ATTRIBUTE_FILE$");
 	}
 	
+	/**
+	 * Create 'Description' parameter, used to generate the defect description
+	 * @return
+	 */
 	private static final BugParam createBugParamDescription() {
 		return new BugParamTextArea().setDisplayLabel("Description").setRequired(true)
 				.setValue("Issue Ids: $ATTRIBUTE_INSTANCE_ID$\\n$ISSUE_DEEPLINK$");
 	}
 
-	private final BugParamDefinition<IOctaneBugParamChoiceOnChangeHandler> bugParamDefinition;
-    OctaneDefaultBugParamDefinition(Producer<? extends BugParam> producer, IOctaneBugParamChoiceOnChangeHandler onChangeHandler) {
+	private final BugParamDefinition<BiConsumer<OctaneApiClient, List<BugParam>>> bugParamDefinition;
+	
+	/**
+	 * Constructor for enumeration entries, requiring a {@link BugParam} {@link Producer}, and
+	 * an onChange handler in the form of a {@link BiConsumer} instance that accepts an 
+	 * {@link OctaneApiClient} instance and a {@link List} of {@link BugParam} instances.
+	 * 
+	 * @param producer
+	 * @param onChangeHandler
+	 */
+    OctaneDefaultBugParamDefinition(Producer<? extends BugParam> producer, BiConsumer<OctaneApiClient, List<BugParam>> onChangeHandler) {
     	this.bugParamDefinition = new BugParamDefinition<>(name(),producer, onChangeHandler);
     }
+    
+    /**
+     * Get the {@link BugParamDefinition} instance for the current enumeration entry.
+     */
     @Override
-    public BugParamDefinition<IOctaneBugParamChoiceOnChangeHandler> definition() {
+    public BugParamDefinition<BiConsumer<OctaneApiClient, List<BugParam>>> definition() {
     	return bugParamDefinition;
     }
     
+    /**
+     * Update the choice list of the 'Root' parameter in the given {@link List} 
+     * of {@link BugParam} instances, by loading the available work item root names 
+     * from ALM Octane. As this update may have an effect on dependent fields, this
+     * method will call {@link #updateEpicParam(OctaneApiClient, List)} after the
+     * 'Root' parameter has been updated.
+     * 
+     * @param client
+     * @param bugParams
+     */
     static final void updateRootParam(OctaneApiClient client, List<BugParam> bugParams) {
 		BugParam rootParam = OctaneDefaultBugParamDefinition.ROOT.definition().getCurrentBugParam(bugParams);
 		rootParam.setRequired(true);
@@ -100,6 +150,16 @@ enum OctaneDefaultBugParamDefinition implements IBugParamDefinitionProvider<IOct
 		updateEpicParam(client, bugParams);
 	}
 	
+    /**
+     * Update the choice list of the 'Epic' parameter in the given {@link List} 
+     * of {@link BugParam} instances, by loading the available epic names from 
+     * ALM Octane. As this update may have an effect on dependent fields, this
+     * method will call {@link #updateFeatureParam(OctaneApiClient, List)} after the
+     * 'Epic' parameter has been updated.
+     * 
+     * @param client
+     * @param bugParams
+     */
 	static final void updateEpicParam(OctaneApiClient client, List<BugParam> bugParams) {
 		String rootName = OctaneDefaultBugParamDefinition.ROOT.definition().getCurrentBugParam(bugParams).getValue();
 		BugParam epicParam = OctaneDefaultBugParamDefinition.EPIC.definition().getCurrentBugParam(bugParams);
@@ -107,6 +167,15 @@ enum OctaneDefaultBugParamDefinition implements IBugParamDefinitionProvider<IOct
 		updateFeatureParam(client, bugParams);
 	}
 	
+	/**
+     * Update the choice list of the 'Feature' parameter in the given {@link List} 
+     * of {@link BugParam} instances, by loading the available feature names from 
+     * ALM Octane. If an epic has been selected, the 'Feature' parameter is set to
+     * required, as defects cannot have an epic as their parent.
+     * 
+     * @param client
+     * @param bugParams
+     */
 	static final void updateFeatureParam(OctaneApiClient client, List<BugParam> bugParams) {
 		String rootName = OctaneDefaultBugParamDefinition.ROOT.definition().getCurrentBugParam(bugParams).getValue();
 		String epicName = OctaneDefaultBugParamDefinition.EPIC.definition().getCurrentBugParam(bugParams).getValue();
@@ -115,6 +184,11 @@ enum OctaneDefaultBugParamDefinition implements IBugParamDefinitionProvider<IOct
 		featureParam.setRequired(StringUtils.isNotBlank(epicName));
 	}
 	
+	/**
+	 * Helper method to update the choice list of a {@link BugParamChoice} instance
+	 * @param bugParam
+	 * @param choiceList
+	 */
 	static private final void updateChoiceList(BugParam bugParam, List<String> choiceList) {
 		Validate.isInstanceOf(BugParamChoice.class, bugParam, "Cannot update choice list for bug paramater type "+bugParam.getClass().getName());
 		((BugParamChoice)bugParam).setChoiceList(choiceList);

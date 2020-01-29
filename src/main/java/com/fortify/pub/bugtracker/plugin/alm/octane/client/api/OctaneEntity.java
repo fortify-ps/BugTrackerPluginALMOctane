@@ -22,39 +22,52 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.pub.bugtracker.plugin.fields;
+package com.fortify.pub.bugtracker.plugin.alm.octane.client.api;
 
-import org.glassfish.jersey.internal.util.Producer;
-
-import com.fortify.pub.bugtracker.support.BugTrackerConfig;
+import javax.json.Json;
+import javax.json.JsonObject;
 
 /**
- * This class describes a {@link BugTrackerConfig} definition, consisting of a
- * {@link Producer} for producing {@link BugTrackerConfig} instances.
+ * This enumeration lists various ALM Octane entities as used by
+ * this SSC bug tracker plugin (and as such is not meant to list 
+ * every existing Octane entity).
  * 
  * @author Ruud Senden
+ *
  */
-public class BugTrackerConfigDefinition extends ValueAccessor {
-	private final Producer<BugTrackerConfig> bugTrackerConfigProducer;
+public enum OctaneEntity {
+	WORK_ITEM_ROOT, EPIC, FEATURE, DEFECT, PHASE, WORK_ITEM, COMMENT;
 	
-	public BugTrackerConfigDefinition(String identifier, Producer<BugTrackerConfig> bugTrackerConfigProducer) {
-		super(identifier);
-		this.bugTrackerConfigProducer = bugTrackerConfigProducer;
-	}
-	
-	private final Producer<BugTrackerConfig> getBugTrackerConfigProducer() {
-		return bugTrackerConfigProducer;
+	/**
+	 * Get the singular entity name for an enumeration entry. This just
+	 * returns the enumeration name in lower case.
+	 * @return
+	 */
+	public final String singular() {
+		return name().toLowerCase();
 	}
 	
 	/**
-	 * This method returns a {@link BugTrackerConfig} instance as produced by the
-	 * configured {@link Producer}. The produced {@link BugTrackerConfig}
-	 * instance will be updated with the identifier returned by
-	 * {@link #getIdentifier()}.
-	 * 
+	 * Get the plural entity name for an enumeration entry. This just
+	 * returns the singular name with an 's' appended at the end.
 	 * @return
 	 */
-	public final BugTrackerConfig createBugTrackerConfig() {
-		return getBugTrackerConfigProducer().call().setIdentifier(getIdentifier());
+	public final String plural() {
+		return singular()+"s";
+	}
+	
+	/**
+	 * This method returns a JsonObject that represents a reference to
+	 * the entity identified by the given id of the entity type 
+	 * represented by the current enumeration entry.
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public final JsonObject getReferenceObjectForId(String id) {
+		return Json.createObjectBuilder()
+			.add("type", singular())
+			.add("id", id)
+			.build();
 	}
 }

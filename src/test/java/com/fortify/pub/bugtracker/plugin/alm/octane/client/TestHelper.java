@@ -29,6 +29,9 @@ import java.net.URL;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fortify.pub.bugtracker.plugin.alm.octane.client.api.OctaneApiClient;
+import com.fortify.pub.bugtracker.plugin.alm.octane.client.http.OctaneHttpClient;
+import com.fortify.pub.bugtracker.plugin.alm.octane.config.OctaneConfig;
 import com.fortify.pub.bugtracker.support.UserAuthenticationStore;
 
 public class TestHelper {

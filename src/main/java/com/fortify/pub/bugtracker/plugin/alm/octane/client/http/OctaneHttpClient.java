@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.pub.bugtracker.plugin.alm.octane.client;
+package com.fortify.pub.bugtracker.plugin.alm.octane.client.http;
 
 import java.io.Closeable;
 import java.net.URL;
@@ -54,6 +54,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.RequestEntityProcessing;
 
+import com.fortify.pub.bugtracker.plugin.alm.octane.config.OctaneConfig;
 import com.fortify.pub.bugtracker.plugin.proxy.ProxyConfig;
 import com.fortify.pub.bugtracker.support.BugTrackerAuthenticationException;
 import com.fortify.pub.bugtracker.support.BugTrackerException;
@@ -72,10 +73,18 @@ import com.fortify.pub.bugtracker.support.UserAuthenticationStore;
  *      the provided {@link OctaneConfig} configuration.</li>
  * </ul>
  */
-public class OctaneHttpClient implements Closeable {
+public class OctaneHttpClient implements Closeable, AutoCloseable {
     private final Client client;
 	private final OctaneConfig octaneConfig;
 
+	/**
+	 * Initialize this instance based on the given {@link OctaneConfig}, {@link UserAuthenticationStore}
+	 * and {@link ProxyConfig}. 
+	 * 
+	 * @param octaneConfig
+	 * @param authStore
+	 * @param proxyConfig
+	 */
     public OctaneHttpClient(OctaneConfig octaneConfig, UserAuthenticationStore authStore, ProxyConfig proxyConfig) {
     	Validate.notNull(octaneConfig, "Octane configuration must be specified");
     	Validate.notNull(authStore, "Octane credentials must be specified");
@@ -83,16 +92,37 @@ public class OctaneHttpClient implements Closeable {
         this.client = createClient(proxyConfig, authStore);
     }
 
+    /**
+     * Close the underlying {@link Client}.
+     */
     @Override
     public void close() {
         this.client.close();
     }
 
+    /**
+     * This method calls {@link #createClientConfig(ProxyConfig, UserAuthenticationStore)}
+     * with the given {@link ProxyConfig} and {@link UserAuthenticationStore} to create
+     * a {@link ClientConfig} instance, then uses this {@link ClientConfig} instance to
+     * build a new {@link Client} instance.
+     * 
+     * @param proxyConfig
+     * @param authStore
+     * @return
+     */
     private Client createClient(ProxyConfig proxyConfig, UserAuthenticationStore authStore) {
         ClientConfig clientConfig = createClientConfig(proxyConfig, authStore);
         return ClientBuilder.newClient(clientConfig);
     }
 
+    /**
+     * Create a {@link ClientConfig} instance based on the given {@link ProxyConfig} and
+     * {@link UserAuthenticationStore}. This configures various HTTP client properties.
+     * 
+     * @param proxyConfig
+     * @param authStore
+     * @return
+     */
 	private ClientConfig createClientConfig(ProxyConfig proxyConfig, UserAuthenticationStore authStore) {
 		PoolingHttpClientConnectionManager connMan = createConnectionManager();
         RequestConfig httpRequestConfig = createRequestConfig();
@@ -112,6 +142,12 @@ public class OctaneHttpClient implements Closeable {
 		return clientConfig;
 	}
 
+	/**
+	 * Create a {@link CredentialsProvider} instance for the given {@link UserAuthenticationStore}.
+	 * 
+	 * @param authStore
+	 * @return
+	 */
 	private CredentialsProvider createCredentialsProvider(UserAuthenticationStore authStore) {
 		CredentialsProvider result = new BasicCredentialsProvider();
         if (authStore != null) {
@@ -120,6 +156,13 @@ public class OctaneHttpClient implements Closeable {
         return result;
 	}
 
+	/**
+	 * Update the given {@link ClientConfig} based on the given {@link ProxyConfig}. If the given
+	 * {@link ProxyConfig} is null, this method has no effect.
+	 * 
+	 * @param clientConfig
+	 * @param proxyConfig
+	 */
 	private void setProxyConfiguration(ClientConfig clientConfig, ProxyConfig proxyConfig) {
 		if ( proxyConfig!=null ) {
         	clientConfig
@@ -130,6 +173,11 @@ public class OctaneHttpClient implements Closeable {
         }
 	}
 
+	/**
+	 * Create a {@link RequestConfig} instance to be used for HTTP requests to our
+	 * target system.
+	 * @return
+	 */
 	private RequestConfig createRequestConfig() {
 		// Set up reasonable/acceptable values for request timeouts:
         RequestConfig httpRequestConfig = RequestConfig.custom()
@@ -144,6 +192,11 @@ public class OctaneHttpClient implements Closeable {
 		return httpRequestConfig;
 	}
 
+	/**
+	 * Create a {@link PoolingHttpClientConnectionManager} instance to be used for
+	 * handling HTTP connections to our target system. 
+	 * @return
+	 */
 	private PoolingHttpClientConnectionManager createConnectionManager() {
 		// Set up connection manager for ApacheConnectionProvider:
         PoolingHttpClientConnectionManager connMan = new PoolingHttpClientConnectionManager();
@@ -154,15 +207,51 @@ public class OctaneHttpClient implements Closeable {
 		return connMan;
 	}
 
-    public <T> T httpGetRequest(WebTarget webTarget, Class<T> returnType) {
-        Invocation invocation = webTarget.request(MediaType.APPLICATION_JSON)
+	/**
+	 * Make an HTTP request to the given target using the given HTTP method, and return the
+	 * results as the given return type.
+	 * 
+	 * @param method
+	 * @param target
+	 * @param returnType
+	 * @return
+	 */
+    public <T> T httpRequest(String method, WebTarget target, Class<T> returnType) {
+        Invocation invocation = target.request(MediaType.APPLICATION_JSON)
             .header("Connection","keep-alive")
             .header("ALM_OCTANE_TECH_PREVIEW", "true") // Required for basic authentication
-            .buildGet();
+            .build(method);
 
         return invoke(invocation, returnType);
     }
+    
+    /**
+     * Make an HTTP request to the given target using the given HTTP method, passing the
+     * given JSON data as the request body, and return the results as the given return type.
+	 * 
+     * @param method
+     * @param target
+     * @param data
+     * @param returnType
+     * @return
+     */
+    public <T> T httpRequest(String method, WebTarget target, JsonObject data, Class<T> returnType){
+        Invocation invocation = target.request(MediaType.APPLICATION_JSON)
+        		.header("ALM_OCTANE_TECH_PREVIEW", "true") // Required for basic authentication
+        		.build(method, Entity.json(data));
+        
+        return invoke(invocation, returnType);
+    }
 
+    /**
+     * Invoke the given {@link Invocation} and return the results as the given return type.
+     * The main objective of this method is to handle potential exceptions thrown by 
+     * {@link Invocation#invoke(Class)}.
+     * 
+     * @param invocation
+     * @param returnType
+     * @return
+     */
 	private <T> T invoke(Invocation invocation, Class<T> returnType) {
 		try {
             return invocation.invoke(returnType);
@@ -186,32 +275,29 @@ public class OctaneHttpClient implements Closeable {
             throw new BugTrackerException("Unexpected error when requesting Octane", e);
         }
 	}
-
-
-    public <T> T httpPostRequest(WebTarget webTarget, JsonObject data, Class<T> returnType){
-        Invocation invocation = webTarget.request(MediaType.APPLICATION_JSON)
-        		.header("ALM_OCTANE_TECH_PREVIEW", "true") // Required for basic authentication
-        		.buildPost(Entity.json(data));
-        
-        return invoke(invocation, returnType);
-    }
     
-    public <T> T httpPutRequest(WebTarget webTarget, JsonObject data, Class<T> returnType) {
-    	Invocation invocation = webTarget.request(MediaType.APPLICATION_JSON)
-        		.header("ALM_OCTANE_TECH_PREVIEW", "true") // Required for basic authentication
-        		.buildPut(Entity.json(data));
-        
-        return invoke(invocation, returnType);
-	}
-    
+	/**
+	 * Get the {@link OctaneConfig} instance that was passed to our constructor.
+	 * @return
+	 */
     public OctaneConfig getOctaneConfig() {
 		return octaneConfig;
 	}
 
+    /**
+     * Get the base {@link WebTarget} as specified in the {@link OctaneConfig}
+     * that was passed to our constructor.
+     * @return
+     */
 	public WebTarget getBaseTarget() {
     	return client.target(getBaseUrlAsString());
     }
     
+	/**
+     * Get the base {@link WebTarget} for making REST API requests to the
+     * shared space and workspace as specified in our {@link OctaneConfig}. 
+     * @return
+     */
     public WebTarget getApiWorkspaceTarget() {
     	return getBaseTarget()
     				.path("/api/shared_spaces/")
@@ -220,10 +306,21 @@ public class OctaneHttpClient implements Closeable {
     				.path(getOctaneConfig().getWorkspaceId());
     }
 
+    /**
+     * Get the base URL as specified in the {@link OctaneConfig}
+     * that was passed to our constructor, and return this URL as
+     * a {@link String}.
+     * @return
+     */
 	public final String getBaseUrlAsString() {
 		return getBaseUrl().toString();
 	}
 
+	/**
+     * Get the base URL as specified in the {@link OctaneConfig}
+     * that was passed to our constructor.
+     * @return
+     */
 	public final URL getBaseUrl() {
 		return getOctaneConfig().getBaseUrl();
 	}

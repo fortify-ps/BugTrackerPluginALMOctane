@@ -82,3 +82,7 @@ the plugins currently bundled with SSC.
       provide better encapsulation and separation of concerns. This results in a lot
       more classes, with each class focusing on just a single task/responsibility.  
       
+# Licensing
+
+See [LICENSE.TXT](LICENSE.TXT)
+

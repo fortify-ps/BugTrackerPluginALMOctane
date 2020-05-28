@@ -20,6 +20,7 @@ jobs:
           FOD_USER: ${{ secrets.FOD_USER }}
           FOD_PWD: ${{ secrets.FOD_PWD }}
       - uses: actions/upload-artifact@v2
+        if: failure()
         with:
           name: scancentral-logs
           path: /home/runner/.fortify/scancentral/log
